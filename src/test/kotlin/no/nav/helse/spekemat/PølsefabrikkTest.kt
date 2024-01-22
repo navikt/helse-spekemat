@@ -52,9 +52,35 @@ class PølsefabrikkTest {
         assertEquals(listOf(p2, p1), result.single()) // rekkefølgen på rad 1
     }
 
-    private fun pølse(fom: LocalDate, tom: LocalDate) = Pølse(UUID.randomUUID(), fom, tom)
+    @Test
+    fun `revurdering`() {
+        val v1 = UUID.randomUUID()
+        val v2 = UUID.randomUUID()
 
-    infix fun LocalDate.til(tom: LocalDate) = pølse(this, tom)
+        val p1 = 1.januar til 5.januar som v1
+        val p2 = 6.januar til 10.januar som v2
+        val p2Revurdering = p2.fordi(UUID.randomUUID())
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.nyPølse(p2Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size) // forventer to rader
+        assertEquals(listOf(p2Revurdering, p1), result[0]) // rekkefølgen på rad 1
+        assertEquals(listOf(p2, p1), result[1]) // rekkefølgen på rad 1
+    }
+
+    private fun pølse(
+        vedtaksperiodeId: UUID,
+        fom: LocalDate,
+        tom: LocalDate,
+        kilde: UUID = UUID.randomUUID()
+    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), kilde, fom, tom)
+
+    infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID(), this, tom)
+    infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
+    infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
 
     private val mandag = LocalDate.of(2018, 1, 1)
     val Int.januar get() = mandag.withDayOfMonth(this).withMonth(1)
