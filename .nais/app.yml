@@ -17,6 +17,13 @@ spec:
     enabled: true
   kafka:
     pool: {{kafkaPool}}
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_15
+        diskAutoresize: true
+        databases:
+          - name: spekemat
+            envVarPrefix: DATABASE
   ingresses:
     - {{ingress}}
   env:
