@@ -1,0 +1,21 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: spekemat
+  namespace: tbd
+  labels:
+    team: tbd
+spec:
+  image: {{image}}
+  liveness:
+    path: /isalive
+  readiness:
+    path: /isready
+  prometheus:
+    path: /metrics
+  secureLogs:
+    enabled: true
+  kafka:
+    pool: {{kafkaPool}}
+  ingresses:
+    - {{ingress}}

@@ -1,0 +1,4 @@
+{
+  "kafkaPool": "nav-dev",
+  "ingress": "https://spekemat.intern.dev.nav.no"
+}
