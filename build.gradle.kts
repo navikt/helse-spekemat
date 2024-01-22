@@ -6,6 +6,12 @@ val mainClass = "no.nav.helse.spekemat.AppKt"
 val junitJupiterVersion = "5.10.1"
 val rapidsAndRiversVersion = "2024010209171704183456.6d035b91ffb4"
 
+val flywayCoreVersion = "10.6.0"
+val hikariCPVersion = "5.1.0"
+val postgresqlVersion = "42.7.1"
+val kotliqueryVersion = "1.9.0"
+val testcontainersVersion = "1.19.3"
+
 repositories {
     val githubPassword: String? by project
     mavenCentral()
@@ -25,6 +31,17 @@ repositories {
 
 dependencies {
     api("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
+
+    api("org.flywaydb:flyway-core:$flywayCoreVersion")
+    api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
+    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
+    implementation("org.postgresql:postgresql:$postgresqlVersion")
+    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
+    testImplementation("org.testcontainers:postgresql:$testcontainersVersion") {
+        exclude("junit", "junit")
+    }
+    testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
