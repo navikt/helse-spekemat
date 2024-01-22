@@ -10,7 +10,7 @@ class Pølsefabrikk {
 
     fun nyPølse(pølse: Pølse) {
         // ny rad hvis pølsen finnes fra før
-        if (gjeldendeRad.harPølse(pølse)) {
+        if (gjeldendeRad.skalLageNyRad(pølse)) {
             pakken.add(0, gjeldendeRad)
             gjeldendeRad = gjeldendeRad.nyPølserad(pølse)
             return
@@ -25,16 +25,20 @@ class Pølsefabrikk {
 }
 
 data class Pølserad(val pølser: List<Pølse>, val kildeTilRad: UUID) {
-    fun harPølse(other: Pølse) = pølser.any { pølse -> other.erNyPølseAv(pølse) }
+    fun skalLageNyRad(other: Pølse) =
+        pølser.any { pølse -> other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde }
 
     fun nyPølserad(pølse: Pølse): Pølserad {
         return this
-            .copy(pølser = pølser.filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId })
             .nyPølse(pølse)
+            .copy(kildeTilRad = pølse.kilde)
     }
     fun nyPølse(pølse: Pølse): Pølserad {
         return this.copy(
-            pølser = pølser.plusElement(pølse).sortedByDescending { it.fom }
+            pølser = pølser
+                .filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId }
+                .plusElement(pølse)
+                .sortedByDescending { it.fom }
         )
     }
 }

@@ -53,7 +53,7 @@ class PølsefabrikkTest {
     }
 
     @Test
-    fun `revurdering`() {
+    fun `ny rad ved revurdering`() {
         val v1 = UUID.randomUUID()
         val v2 = UUID.randomUUID()
 
@@ -68,6 +68,28 @@ class PølsefabrikkTest {
         val result = fabrikk.pakke()
         assertEquals(2, result.size) // forventer to rader
         assertEquals(listOf(p2Revurdering, p1), result[0]) // rekkefølgen på rad 1
+        assertEquals(listOf(p2, p1), result[1]) // rekkefølgen på rad 1
+    }
+
+    @Test
+    fun `lager ikke flere rader dersom mange pølser opprettes fra samme revurdering`() {
+        val v1 = UUID.randomUUID()
+        val v2 = UUID.randomUUID()
+        val revurderingkilde = UUID.randomUUID()
+
+        val p1 = 1.januar til 5.januar som v1
+        val p2 = 6.januar til 10.januar som v2
+        val p2Revurdering = p2.fordi(revurderingkilde)
+        val p1Revurdering = p1.fordi(revurderingkilde)
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.nyPølse(p2Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
+        fabrikk.nyPølse(p1Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size) // forventer to rader
+        assertEquals(listOf(p2Revurdering, p1Revurdering), result[0]) // rekkefølgen på rad 1
         assertEquals(listOf(p2, p1), result[1]) // rekkefølgen på rad 1
     }
 
