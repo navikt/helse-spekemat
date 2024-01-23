@@ -1,30 +1,31 @@
 package no.nav.helse.spekemat
 
-import java.time.LocalDate
 import java.util.*
 
-class Pølsefabrikk {
+class Pølsefabrikk private constructor(
+    private val pakken: MutableList<Pølserad>
+) {
+    constructor() : this(mutableListOf())
 
-    private val pakken: MutableList<Pølserad> = mutableListOf()
-    private var gjeldendeRad = Pølserad(emptyList(), UUID.fromString("00000000-0000-0000-0000-000000000000"))
+    companion object {
+        fun gjenopprett(rader: List<PølseradDto>) =
+            Pølsefabrikk(rader.map { Pølserad.fraDto(it) }.toMutableList())
+    }
 
     fun nyPølse(pølse: Pølse) {
         // ny rad hvis pølsen finnes fra før
-        if (gjeldendeRad.skalLageNyRad(pølse)) {
-            pakken.add(0, gjeldendeRad)
-            gjeldendeRad = gjeldendeRad.nyPølserad(pølse)
-            return
-        }
-        gjeldendeRad = gjeldendeRad.nyPølse(pølse)
+        if (pakken.isEmpty() || pakken[0].skalLageNyRad(pølse))
+            return pakken.add(0, pakken.getOrNull(0)?.nyPølserad(pølse) ?: Pølserad(listOf(pølse), pølse.kilde))
+        pakken[0] = pakken[0].nyPølse(pølse)
     }
 
-    fun pakke(): List<List<Pølse>> {
-        val resultat = pakken.map { it.pølser }
-        return listOf(gjeldendeRad.pølser) + resultat
-    }
+    fun pakke() = pakken.map { it.dto() }
 }
 
-data class Pølserad(val pølser: List<Pølse>, val kildeTilRad: UUID) {
+data class Pølserad(
+    val pølser: List<Pølse>,
+    val kildeTilRad: UUID
+) {
     fun skalLageNyRad(other: Pølse) =
         pølser.any { pølse -> other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde }
 
@@ -38,21 +39,47 @@ data class Pølserad(val pølser: List<Pølse>, val kildeTilRad: UUID) {
             pølser = pølser
                 .filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId }
                 .plusElement(pølse)
-                .sortedByDescending { it.fom }
+        )
+    }
+
+    fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)
+    companion object {
+        fun fraDto(dto: PølseradDto) = Pølserad(
+            pølser = dto.pølser.map { Pølse.fraDto(it) },
+            kildeTilRad = dto.kildeTilRad
         )
     }
 }
 
 data class Pølse(
     val vedtaksperiodeId: UUID,
-    // generasjonsId?
-    val id: UUID,
+    val generasjonId: UUID,
     // tingen som gjorde at generasjonen ble opprettet
-    val kilde: UUID,
-    // fom på perioden, hovedsaklig for sortering
-    val fom: LocalDate,
-    // tom på perioden, hovedsaklig for lesbarhet for oss utviklere?
-    val tom: LocalDate
+    val kilde: UUID
 ) {
     fun erNyPølseAv(other: Pølse) = this.vedtaksperiodeId == other.vedtaksperiodeId && this.kilde != other.kilde
+    fun dto() = PølseDto(
+        vedtaksperiodeId = vedtaksperiodeId,
+        generasjonId = generasjonId,
+        kilde = kilde
+    )
+
+    companion object {
+        fun fraDto(dto: PølseDto) = Pølse(
+            vedtaksperiodeId = dto.vedtaksperiodeId,
+            generasjonId = dto.generasjonId,
+            kilde = dto.kilde
+        )
+    }
 }
+
+data class PølseradDto(
+    val pølser: List<PølseDto>,
+    val kildeTilRad: UUID
+)
+data class PølseDto(
+    val vedtaksperiodeId: UUID,
+    val generasjonId: UUID,
+    // tingen som gjorde at generasjonen ble opprettet
+    val kilde: UUID
+)
