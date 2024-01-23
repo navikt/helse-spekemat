@@ -4,7 +4,9 @@ import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.Payload
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
@@ -12,6 +14,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.testing.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.statement.*
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import org.junit.jupiter.api.AfterEach
@@ -26,7 +29,8 @@ import java.util.*
 class E2ETest {
     private companion object {
         const val FNR = "12345678911"
-        const val ORGN = "987654321"
+        const val A1 = "987654321"
+        const val A2 = "112233445"
     }
     private val dao = PølseDao { Database.dataSource }
     private val pølsetjeneste = Pølsetjenesten(dao)
@@ -71,76 +75,59 @@ class E2ETest {
         val hendelseId = UUID.randomUUID()
         val kildeId = UUID.randomUUID()
 
-        val response = client.post("/api/pølse") {
-            contentType(ContentType.Application.Json)
-            setBody(PølseRequest(
-                fnr = FNR,
-                yrkesaktivitetidentifikator = ORGN,
-                pølse = PølseDto(
-                    vedtaksperiodeId = UUID.randomUUID(),
-                    generasjonId = UUID.randomUUID(),
-                    kilde = kildeId
-                ),
-                meldingsreferanseId = hendelseId,
-                hendelsedata = "{}"
-            ))
+        sendNyPølseRequest(FNR, A1, hendelseId = hendelseId, kildeId = kildeId).also { response ->
+            assertTrue(response.status.isSuccess())
         }
 
-        assertTrue(response.status.isSuccess())
         verifiserPersonFinnes(FNR)
         verifiserHendelseFinnes(hendelseId)
-        verifiserPølsepakkeFinnes(FNR, ORGN, hendelseId, kildeId)
+        verifiserPølsepakkeFinnes(FNR, A1, hendelseId, kildeId)
+
+        sendHentPølserRequest(FNR).also { response ->
+            assertTrue(response.status.isSuccess())
+            val result = objectMapper.readValue<PølserResponse>(response.bodyAsText())
+            assertEquals(1, result.yrkesaktiviteter.size)
+            assertEquals(A1, result.yrkesaktiviteter.single().yrkesaktivitetidentifikator)
+            assertEquals(1, result.yrkesaktiviteter.single().rader.size)
+        }
     }
 
     @Test
-    fun `to vedtak`() = foredlerTestApp{
+    fun `to vedtak to yrkesaktiviteter`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
         val v2 = enVedtaksperiode()
+        val v3 = enVedtaksperiode()
+        val v4 = enVedtaksperiode()
 
-        val response1 = client.post("/api/pølse") {
-            contentType(ContentType.Application.Json)
-            setBody(PølseRequest(
-                fnr = FNR,
-                yrkesaktivitetidentifikator = ORGN,
-                pølse = PølseDto(
-                    vedtaksperiodeId = v1,
-                    generasjonId = UUID.randomUUID(),
-                    kilde = UUID.randomUUID()
-                ),
-                meldingsreferanseId = UUID.randomUUID(),
-                hendelsedata = "{}"
-            ))
-        }
-        val response2 = client.post("/api/pølse") {
-            contentType(ContentType.Application.Json)
-            setBody(PølseRequest(
-                fnr = FNR,
-                yrkesaktivitetidentifikator = ORGN,
-                pølse = PølseDto(
-                    vedtaksperiodeId = v2,
-                    generasjonId = UUID.randomUUID(),
-                    kilde = UUID.randomUUID()
-                ),
-                meldingsreferanseId = UUID.randomUUID(),
-                hendelsedata = "{}"
-            ))
-        }
+        sendNyPølseRequest(FNR, A1, v1)
+        sendNyPølseRequest(FNR, A1, v2)
+        sendNyPølseRequest(FNR, A2, v3)
+        sendNyPølseRequest(FNR, A2, v4)
 
-        assertTrue(response1.status.isSuccess())
-        assertTrue(response2.status.isSuccess())
-        val fabrikk = dao.hent(FNR, ORGN)?.pakke() ?: fail { "Forventet å finne person" }
-        assertEquals(1, fabrikk.size)
-        assertEquals(2, fabrikk.single().pølser.size)
+        sendHentPølserRequest(FNR).also { response ->
+            val result = response.body<PølserResponse>()
+            assertEquals(2, result.yrkesaktiviteter.size)
+            result.yrkesaktiviteter[0].also { a1 ->
+                assertEquals(A1, a1.yrkesaktivitetidentifikator)
+                assertEquals(1, a1.rader.size)
+                assertEquals(2, a1.rader.single().pølser.size)
+            }
+            result.yrkesaktiviteter[1].also { a2 ->
+                assertEquals(A2, a2.yrkesaktivitetidentifikator)
+                assertEquals(1, a2.rader.size)
+                assertEquals(2, a2.rader.single().pølser.size)
+            }
+        }
     }
 
     @Test
-    fun `slette person`() {
+    fun `slette person`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
 
-        pølsetjeneste.håndter(FNR, ORGN, PølseDto(v1, UUID.randomUUID(), UUID.randomUUID()), UUID.randomUUID(), "{}")
-        assertNotNull(dao.hent(FNR, ORGN))
-        pølsetjeneste.slett(FNR)
-        assertNull(dao.hent(FNR, ORGN))
+        sendNyPølseRequest(FNR, A1, v1)
+        assertNotNull(dao.hent(FNR, A1))
+        sendSlettRequest(FNR)
+        assertNull(dao.hent(FNR, A1))
     }
 
     private fun enVedtaksperiode() = UUID.randomUUID()
@@ -179,7 +166,50 @@ class E2ETest {
 
 private class TestContext(
     val client: HttpClient
-)
+) {
+    suspend fun sendNyPølseRequest(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        hendelseId: UUID = UUID.randomUUID(),
+        kildeId: UUID = UUID.randomUUID()
+    ): HttpResponse {
+        return client.post("/api/pølse") {
+            contentType(ContentType.Application.Json)
+            setBody(PølseRequest(
+                fnr = fnr,
+                yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
+                pølse = PølseDto(
+                    vedtaksperiodeId = vedtaksperiodeId,
+                    generasjonId = UUID.randomUUID(),
+                    kilde = kildeId
+                ),
+                meldingsreferanseId = hendelseId,
+                hendelsedata = "{}"
+            ))
+        }.also {
+            assertTrue(it.status.isSuccess())
+        }
+    }
+
+    suspend fun sendHentPølserRequest(fnr: String) =
+        client.post("/api/pølser") {
+            contentType(ContentType.Application.Json)
+            setBody(PølserRequest(
+                fnr = fnr
+            ))
+        }.also {
+            assertTrue(it.status.isSuccess())
+        }
+
+    suspend fun sendSlettRequest(fnr: String) =
+        client.post("/api/slett") {
+            contentType(ContentType.Application.Json)
+            setBody(SlettRequest(fnr))
+        }.also {
+            assertTrue(it.status.isSuccess())
+        }
+}
 
 class LokalePayload(claims: Map<String, String>) : Payload {
     private val claims = claims.mapValues { LokaleClaim(it.value) }

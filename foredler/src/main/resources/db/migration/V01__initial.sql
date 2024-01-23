@@ -21,7 +21,7 @@ create table hendelse(
 );
 
 create table polsepakke(
-    person_id bigint references person(id) on delete cascade on update cascade not null primary key,
+    person_id bigint references person(id) on delete cascade on update cascade not null,
     yrkesaktivitetidentifikator varchar(32) not null,
     hendelse_id bigint references hendelse(id) on delete restrict not null,
     kilde_id uuid not null,

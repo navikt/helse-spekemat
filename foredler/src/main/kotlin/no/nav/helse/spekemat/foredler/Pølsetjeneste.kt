@@ -4,6 +4,7 @@ import java.util.*
 
 interface Pølsetjeneste {
     fun håndter(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
+    fun hent(fnr: String): List<YrkesaktivitetDto>
     fun slett(fnr: String)
 }
 
@@ -14,6 +15,10 @@ class Pølsetjenesten(private val dao: PølseDao) : Pølsetjeneste {
 
         val resultat = fabrikk.pakke()
         dao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, hendelsedata)
+    }
+
+    override fun hent(fnr: String): List<YrkesaktivitetDto> {
+        return dao.hent(fnr)
     }
 
     override fun slett(fnr: String) {

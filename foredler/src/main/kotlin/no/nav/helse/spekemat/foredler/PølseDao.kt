@@ -23,15 +23,26 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         }
     }
 
-    fun hent(fnr: String, yrkesaktivitetidentifikator: String) = hentPerson(fnr, yrkesaktivitetidentifikator)?.let {
+    fun hent(fnr: String, yrkesaktivitetidentifikator: String) = hentYrkesaktivitet(fnr, yrkesaktivitetidentifikator)?.let {
         Pølsefabrikk.gjenopprett(it.rader)
     }
 
-    private fun hentPerson(fnr: String, yrkesaktivitetidentifikator: String) =
+    fun hent(fnr: String) = hentPerson(fnr).map { (yrkesaktivitetidentifikator, rader) ->
+        YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.rader).pakke())
+    }
+
+    private fun hentYrkesaktivitet(fnr: String, yrkesaktivitetidentifikator: String) =
         sessionOf(dataSource.getDataSource()).use { session ->
             session.run(queryOf(HENT_PØLSEPAKKE, mapOf("fnr" to fnr, "yid" to yrkesaktivitetidentifikator)).map { rad ->
                 objectMapper.readValue<Personrad>(rad.string("data"))
             }.asSingle)
+        }
+
+    private fun hentPerson(fnr: String) =
+        sessionOf(dataSource.getDataSource()).use { session ->
+            session.run(queryOf(HENT_PØLSEPAKKER, mapOf("fnr" to fnr)).map { rad ->
+                rad.string("yrkesaktivitetidentifikator") to objectMapper.readValue<Personrad>(rad.string("data"))
+            }.asList)
         }
 
     fun opprett(
@@ -97,6 +108,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
 
         @Language("PostgreSQL")
         private const val HENT_PØLSEPAKKE = """SELECT data FROM polsepakke WHERE yrkesaktivitetidentifikator = :yid AND person_id = (SELECT id FROM person WHERE fnr=:fnr);"""
+        private const val HENT_PØLSEPAKKER = """SELECT yrkesaktivitetidentifikator, data FROM polsepakke WHERE person_id = (SELECT id FROM person WHERE fnr=:fnr);"""
 
         @Language("PostgreSQL")
         private const val KOPIER_PØLSEPAKKE = """

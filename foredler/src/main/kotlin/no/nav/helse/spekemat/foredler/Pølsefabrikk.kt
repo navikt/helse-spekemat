@@ -83,3 +83,8 @@ data class PølseDto(
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 )
+
+data class YrkesaktivitetDto(
+    val yrkesaktivitetidentifikator: String,
+    val rader: List<PølseradDto>
+)

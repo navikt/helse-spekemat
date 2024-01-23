@@ -24,9 +24,18 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
         pølsetjeneste.håndter(request.fnr, request.yrkesaktivitetidentifikator, request.pølse, request.meldingsreferanseId, request.hendelsedata)
         call.respond(HttpStatusCode.OK)
     }
+
+    post("/api/pølser") {
+        val request = call.receiveNullable<PølserRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
+            feilmelding = "Ugyldig request"
+        ))
+        call.respond(HttpStatusCode.OK, PølserResponse(pølsetjeneste.hent(request.fnr)))
+    }
 }
 
 data class SlettRequest(val fnr: String)
+data class PølserRequest(val fnr: String)
+data class PølserResponse(val yrkesaktiviteter: List<YrkesaktivitetDto>)
 data class FeilResponse(val feilmelding: String)
 data class PølseRequest(
     val fnr: String,
