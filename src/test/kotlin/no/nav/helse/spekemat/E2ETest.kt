@@ -17,7 +17,7 @@ class E2ETest {
     }
     private val dao = PølseDao { Database.dataSource }
     private val testRapid = TestRapid().apply {
-        GenerasjonOpprettetRiver(this, dao)
+        GenerasjonOpprettetRiver(this, Pølsetjenesten(dao))
         SlettPersonRiver(this, dao)
     }
     private val hendelsefabrikk = Hendelsefabrikk(testRapid, FNR)

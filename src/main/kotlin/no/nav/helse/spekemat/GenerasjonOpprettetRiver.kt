@@ -8,7 +8,7 @@ import java.util.*
 
 internal class GenerasjonOpprettetRiver(
     rapidsConnection: RapidsConnection,
-    private val pølseDao: PølseDao
+    private val pølsetjeneste: Pølsetjeneste
 ): River.PacketListener {
 
     private companion object {
@@ -32,7 +32,7 @@ internal class GenerasjonOpprettetRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        val pølse = Pølse(
+        val pølse = PølseDto(
             vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID(),
             generasjonId = packet["generasjonId"].asUUID(),
             kilde = packet["kilde.meldingsreferanseId"].asUUID()
@@ -45,11 +45,7 @@ internal class GenerasjonOpprettetRiver(
         logg.info("Håndterer generasjon_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))
         sikkerlogg.info("Håndterer generasjon_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))
 
-        val fabrikk = pølseDao.hent(fnr, yrkesaktivitetidentifikator) ?: Pølsefabrikk()
-        fabrikk.nyPølse(pølse)
-
-        val resultat = fabrikk.pakke()
-        pølseDao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, packet.toJson())
+        pølsetjeneste.håndter(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, packet.toJson())
     }
 
     private fun JsonNode.asUUID() = UUID.fromString(asText())
