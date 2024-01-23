@@ -1,0 +1,38 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: spekemat
+  namespace: tbd
+  labels:
+    team: tbd
+spec:
+  image: {{image}}
+  strategy:
+    type: RollingUpdate
+  replicas:
+    min: 2
+    max: 8
+  liveness:
+    path: /isalive
+  readiness:
+    path: /isready
+  prometheus:
+    path: /metrics
+  secureLogs:
+    enabled: true
+  azure:
+    application:
+      enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: spekemat-slakter
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_15
+        diskAutoresize: true
+        databases:
+          - name: spekemat
+            envVarPrefix: DATABASE
+  ingresses:
+    - {{ingress}}

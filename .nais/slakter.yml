@@ -1,0 +1,43 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: spekemat-slakter
+  namespace: tbd
+  labels:
+    team: tbd
+spec:
+  image: {{image}}
+  strategy:
+    type: RollingUpdate
+  replicas:
+    min: 2
+    max: 8
+    scalingStrategy:
+      kafka:
+        topic: tbd.rapid.v1
+        consumerGroup: tbd-spekemat-v1
+        threshold: 200
+  liveness:
+    path: /isalive
+  readiness:
+    path: /isready
+  prometheus:
+    path: /metrics
+  secureLogs:
+    enabled: true
+  kafka:
+    pool: {{kafkaPool}}
+  accessPolicy:
+    outbound:
+      rules:
+        - application: spekemat
+  azure:
+    application:
+      enabled: true
+  env:
+    - name: KAFKA_RAPID_TOPIC
+      value: tbd.rapid.v1
+    - name: KAFKA_CONSUMER_GROUP_ID
+      value: tbd-spekemat-v1
+    - name: KAFKA_RESET_POLICY
+      value: latest
