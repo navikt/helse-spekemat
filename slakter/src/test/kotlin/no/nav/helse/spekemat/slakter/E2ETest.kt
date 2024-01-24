@@ -1,33 +1,38 @@
 package no.nav.helse.spekemat.slakter
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.azure.AzureToken
+import com.github.navikt.tbd_libs.azure.AzureTokenProvider
+import com.github.navikt.tbd_libs.mock.MockHttpResponse
+import com.github.navikt.tbd_libs.mock.bodyAsString
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.time.LocalDateTime
 import java.util.*
 
 class E2ETest {
     private companion object {
         const val FNR = "12345678911"
         const val ORGN = "987654321"
+        private val objectMapper = jacksonObjectMapper()
     }
-    private val pølsetjeneste = object : Pølsetjeneste {
-        var slettetFnr: String? = null
-        var pølsedata: PølseTestData? = null
 
-        override fun håndter(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
-            pølsedata = PølseTestData(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
-        }
-        override fun slett(fnr: String) {
-            slettetFnr = fnr
-        }
-
-        fun reset() {
-            pølsedata = null
-            slettetFnr = null
+    private val azureTokenProvider = object : AzureTokenProvider {
+        override fun bearerToken(scope: String) = AzureToken("liksom-token", LocalDateTime.MAX)
+        override fun onBehalfOfToken(scope: String, token: String): AzureToken {
+            throw NotImplementedError("ikke implementert i mock")
         }
     }
+    private var httpClientMock = mockk<HttpClient>()
+    private val pølsetjeneste = Pølsetjenesten(httpClientMock, azureTokenProvider, "scope-til-spekemat")
     private val testRapid = TestRapid().apply {
         GenerasjonOpprettetRiver(this, pølsetjeneste)
         SlettPersonRiver(this, pølsetjeneste)
@@ -36,7 +41,7 @@ class E2ETest {
 
     @AfterEach
     fun teardown() {
-        pølsetjeneste.reset()
+        clearMocks(httpClientMock)
     }
 
     @Test
@@ -44,28 +49,48 @@ class E2ETest {
         val vedtaksperiodeId = UUID.randomUUID()
         val kilde = UUID.randomUUID()
         val meldingsreferanseId = UUID.randomUUID()
+
+        mockResponse("OK", 200)
         hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
-        assertEquals(FNR, pølsetjeneste.pølsedata?.fnr)
-        assertEquals(ORGN, pølsetjeneste.pølsedata?.yrkesaktivitetidentifikator)
-        assertEquals(meldingsreferanseId, pølsetjeneste.pølsedata?.meldingsreferanseId)
-        assertEquals(vedtaksperiodeId, pølsetjeneste.pølsedata?.pølse?.vedtaksperiodeId)
-        assertEquals(kilde, pølsetjeneste.pølsedata?.pølse?.kilde)
+
+        verifiserRequest(httpClientMock) { request ->
+            val node = objectMapper.readTree(request.bodyAsString())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+
+            node.path("fnr").asText() == FNR
+                    && node.path("yrkesaktivitetidentifikator").asText() == ORGN
+                    && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
+                    && node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
+                    && node.path("pølse").path("kilde").asText() == kilde.toString()
+                    && node.path("pølse").hasNonNull("generasjonId")
+                    && hendelseData.path("@event_name").asText() == "generasjon_opprettet"
+        }
     }
 
     @Test
     fun `slette person`() {
+        mockResponse("OK", 200)
         hendelsefabrikk.sendSlettPerson()
-        assertEquals(FNR, pølsetjeneste.slettetFnr)
+        verifiserRequest(httpClientMock) { request ->
+            val node = objectMapper.readTree(request.bodyAsString())
+            node.path("fnr").asText() == FNR
+        }
+    }
+
+    private fun mockResponse(response: String, statusCode: Int? = null) {
+        every {
+            httpClientMock.send<String>(any(), any())
+        } returns MockHttpResponse(response, statusCode)
+    }
+
+    private fun verifiserRequest(httpClient: HttpClient, sjekk: (HttpRequest) -> Boolean) {
+        verify {
+            httpClient.send<String>(match {
+                sjekk(it)
+            }, any())
+        }
     }
 }
-
-private data class PølseTestData(
-    val fnr: String,
-    val yrkesaktivitetidentifikator: String,
-    val pølse: PølseDto,
-    val meldingsreferanseId: UUID,
-    val hendelsedata: String
-)
 
 private class Hendelsefabrikk(
     private val rapidsConnection: TestRapid,

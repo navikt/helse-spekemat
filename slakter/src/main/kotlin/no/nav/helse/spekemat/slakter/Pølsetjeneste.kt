@@ -1,5 +1,7 @@
 package no.nav.helse.spekemat.slakter
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
@@ -20,7 +22,8 @@ interface Pølsetjeneste {
 class Pølsetjenesten(
     private val httpClient: HttpClient,
     private val azure: AzureTokenProvider,
-    private val scope: String
+    private val scope: String,
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
 ) : Pølsetjeneste {
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
@@ -49,18 +52,7 @@ class Pølsetjenesten(
     }
 
     private fun lagPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
-        @Language("JSON")
-        val requestBody = """{
-            | "fnr": "$fnr",
-            | "yrkesaktivitetidentifikator": "$yrkesaktivitetidentifikator",
-            | "meldingsreferanseId": "$meldingsreferanseId",
-            | "pølse": {
-            |   "vedtaksperiodeId": "${pølse.vedtaksperiodeId}",
-            |   "generasjonId": "${pølse.generasjonId}",
-            |   "kilde": "${pølse.kilde}"
-            | },
-            | "hendelsedata": "$hendelsedata"
-            |}""".trimMargin()
+        val requestBody = objectMapper.writeValueAsString(PølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, pølse, hendelsedata))
         return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody)
     }
 
@@ -81,6 +73,14 @@ class Pølsetjenesten(
             .POST(BodyPublishers.ofString(body))
             .build()
     }
+
+    private data class PølseRequest(
+        val fnr: String,
+        val yrkesaktivitetidentifikator: String,
+        val meldingsreferanseId: UUID,
+        val pølse: PølseDto,
+        val hendelsedata: String
+    )
 }
 
 data class PølseDto(
