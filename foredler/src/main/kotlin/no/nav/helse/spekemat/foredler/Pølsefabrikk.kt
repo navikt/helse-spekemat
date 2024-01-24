@@ -13,10 +13,26 @@ class Pølsefabrikk private constructor(
     }
 
     fun nyPølse(pølse: Pølse) {
-        // ny rad hvis pølsen finnes fra før
-        if (pakken.isEmpty() || pakken[0].skalLageNyRad(pølse))
-            return pakken.add(0, pakken.getOrNull(0)?.nyPølserad(pølse) ?: Pølserad(listOf(pølse), pølse.kilde))
+        if (skalLageNyrad(pølse)) return lagNyRad(pølse)
         pakken[0] = pakken[0].nyPølse(pølse)
+    }
+
+    private fun skalLageNyrad(pølse: Pølse) =
+        pakken.isEmpty() || pakken[0].skalLageNyRad(pølse)
+
+    private fun lagNyRad(pølse: Pølse) {
+        if (pakken.isEmpty()) {
+            pakken.add(Pølserad(listOf(pølse), pølse.kilde))
+            return
+        }
+
+        val pølserad = pakken[0].nyPølserad(pølse)
+        // fjerner pølser med samme kilde fordi det må antyde en out of order-situasjon hvor vi:
+        // 1) først opprettes en ny pølse med kilde X, dvs. den legges bare til gjeldende rad. Den nye perioden trigger dog revurdering av senere perioder
+        // 2) så mottas generasjon_opprettet på etterfølgende perioder med kilde X, og det skal lages ny rad. Da må pølsen opprettet i steg 1) fjernes
+        //    fra raden som "pushes ned", og kun beholdes på siste/nyeste rad
+        pakken[0] = pakken[0].fjernPølserMedSammeKilde(pølse)
+        pakken.add(0, pølserad)
     }
 
     fun pakke() = pakken.map { it.dto() }
@@ -28,6 +44,11 @@ data class Pølserad(
 ) {
     fun skalLageNyRad(other: Pølse) =
         pølser.any { pølse -> other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde }
+
+    fun fjernPølserMedSammeKilde(other: Pølse) =
+        this.copy(
+            pølser = pølser.filterNot { it.kilde == other.kilde }
+        )
 
     fun nyPølserad(pølse: Pølse): Pølserad {
         return this

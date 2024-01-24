@@ -1,6 +1,6 @@
 package no.nav.helse.spekemat.foredler
 
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -22,7 +22,7 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p1)
 
         val result = fabrikk.pakke()
-        Assertions.assertEquals(1, result.size) // forventer én rad
+        assertEquals(1, result.size) // forventer én rad
         assertEquals(setOf(p1), result.single()) // rekkefølgen på rad 1
     }
 
@@ -35,7 +35,7 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p2)
 
         val result = fabrikk.pakke()
-        Assertions.assertEquals(1, result.size) // forventer én rad
+        assertEquals(1, result.size) // forventer én rad
         assertEquals(setOf(p2, p1), result.single()) // rekkefølgen på rad 1
     }
 
@@ -48,7 +48,7 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p1)
 
         val result = fabrikk.pakke()
-        Assertions.assertEquals(1, result.size) // forventer én rad
+        assertEquals(1, result.size) // forventer én rad
         assertEquals(setOf(p2, p1), result.single()) // rekkefølgen på rad 1
     }
 
@@ -67,8 +67,8 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p2Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
 
         val result = fabrikk.pakke()
-        Assertions.assertEquals(2, result.size) // forventer to rader
-        Assertions.assertEquals(revurderingkilde, result[0].kildeTilRad)
+        assertEquals(2, result.size) // forventer to rader
+        assertEquals(revurderingkilde, result[0].kildeTilRad)
         assertEquals(setOf(p2Revurdering, p1), result[0]) // rekkefølgen på rad 1
         assertEquals(setOf(p2, p1), result[1]) // rekkefølgen på rad 2
     }
@@ -90,9 +90,35 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p1Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
 
         val result = fabrikk.pakke()
-        Assertions.assertEquals(2, result.size) // forventer to rader
+        assertEquals(2, result.size) // forventer to rader
         assertEquals(setOf(p2Revurdering, p1Revurdering), result[0]) // rekkefølgen på rad 1
         assertEquals(setOf(p2, p1), result[1]) // rekkefølgen på rad 2 er uvesentlig:
+    }
+
+    @Test
+    fun `out of order`() {
+        val v1 = UUID.randomUUID()
+        val v2 = UUID.randomUUID()
+        val v3 = UUID.randomUUID()
+        val oufOrderOrderkilde = UUID.randomUUID()
+
+        val p1 = 10.januar til 20.januar som v1
+        val p2 = 21.januar til 31.januar som v2
+        val p3 = 1.januar til 5.januar som v3 fordi oufOrderOrderkilde
+        val p2Revurdering = p2.fordi(oufOrderOrderkilde)
+        val p1Revurdering = p1.fordi(oufOrderOrderkilde)
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+
+        fabrikk.nyPølse(p3)
+        fabrikk.nyPølse(p2Revurdering)
+        fabrikk.nyPølse(p1Revurdering)
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size) // forventer to rader
+        assertEquals(setOf(p3, p2Revurdering, p1Revurdering), result[0])
+        assertEquals(setOf(p2, p1), result[1])
     }
 
     private fun pølse(
@@ -111,8 +137,8 @@ class PølsefabrikkTest {
         assertEquals(expected, actual.pølser)
     }
     private fun assertEquals(expected: Set<Pølse>, actual: List<PølseDto>) {
-        Assertions.assertEquals(expected.size, actual.size)
+        assertEquals(expected.size, actual.size)
         val ingenMatch = expected.map { it.dto() }.filterNot { it in actual }
-        Assertions.assertEquals(emptyList<PølseDto>(), ingenMatch) { "Det er pølser som ikke finnes i actual" }
+        assertEquals(emptyList<PølseDto>(), ingenMatch) { "Det er pølser som ikke finnes i actual" }
     }
 }

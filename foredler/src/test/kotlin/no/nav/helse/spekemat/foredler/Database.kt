@@ -3,8 +3,8 @@ package no.nav.helse.spekemat.foredler
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
-import javax.sql.DataSource
 
 object Database {
     private lateinit var flyway: Flyway
@@ -14,6 +14,16 @@ object Database {
             withCreateContainerCmdModifier { command -> command.withName("spekemat") }
             withReuse(true)
             withLabel("app-navn", "spekemat")
+            DockerClientFactory.lazyClient().apply {
+                this
+                    .listContainersCmd()
+                    .exec()
+                    .filter { it.labels["app-navn"] == "spekemat" }
+                    .forEach {
+                        killContainerCmd(it.id).exec()
+                        removeContainerCmd(it.id).withForce(true).exec()
+                    }
+            }
             start()
         }
     }
