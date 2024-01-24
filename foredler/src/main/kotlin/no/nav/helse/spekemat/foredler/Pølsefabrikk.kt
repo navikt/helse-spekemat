@@ -17,6 +17,11 @@ class Pølsefabrikk private constructor(
         pakken[0] = pakken[0].nyPølse(pølse)
     }
 
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): PølseDto {
+        pakken[0] = pakken[0].oppdaterPølse(vedtaksperiodeId, generasjonId, åpen)
+        return pakken[0].pølser.single { it.vedtaksperiodeId == vedtaksperiodeId }.dto()
+    }
+
     private fun skalLageNyrad(pølse: Pølse) =
         pakken.isEmpty() || pakken[0].skalLageNyRad(pølse)
 
@@ -30,7 +35,6 @@ class Pølsefabrikk private constructor(
         pakken[0] = pakken[0].fjernPølserTilBehandling()
         pakken.add(0, pølserad)
     }
-
     fun pakke() = pakken.map { it.dto() }
 }
 
@@ -57,7 +61,13 @@ data class Pølserad(
         )
     }
 
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): Pølserad {
+        return this.copy(
+            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, åpen) }
+        )
+    }
     fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)
+
     companion object {
         fun fraDto(dto: PølseradDto) = Pølserad(
             pølser = dto.pølser.map { Pølse.fraDto(it) },
@@ -82,6 +92,16 @@ data class Pølse(
         kilde = kilde
     )
 
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): Pølse {
+        if (this.vedtaksperiodeId != vedtaksperiodeId) return this
+        check(this.generasjonId == generasjonId) {
+            "Det er gjort forsøk på å oppdatere en generasjon som ikke samsvarer med den som er registrert i nyeste rad"
+        }
+        return this.copy(
+            åpen = åpen
+        )
+    }
+
     companion object {
         fun fraDto(dto: PølseDto) = Pølse(
             vedtaksperiodeId = dto.vedtaksperiodeId,
@@ -102,9 +122,4 @@ data class PølseDto(
     val åpen: Boolean,
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
-)
-
-data class YrkesaktivitetDto(
-    val yrkesaktivitetidentifikator: String,
-    val rader: List<PølseradDto>
 )

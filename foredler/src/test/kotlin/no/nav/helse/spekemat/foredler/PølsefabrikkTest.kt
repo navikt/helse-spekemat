@@ -45,7 +45,7 @@ class PølsefabrikkTest {
         val p2 = 6.januar til 10.januar
 
         fabrikk.nyPølse(p1)
-        fabrikk.nyPølse(p1.lukket())
+        fabrikk.lukketPølse(p1)
         fabrikk.nyPølse(p2)
 
         val result = fabrikk.pakke()
@@ -60,7 +60,7 @@ class PølsefabrikkTest {
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
-        fabrikk.nyPølse(p1.lukket())
+        fabrikk.lukketPølse(p1)
 
         val result = fabrikk.pakke()
         assertEquals(1, result.size) // forventer én rad
@@ -79,8 +79,8 @@ class PølsefabrikkTest {
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
-        fabrikk.nyPølse(p1.lukket()) // vedtak fattet
-        fabrikk.nyPølse(p2.lukket()) // vedtak fattet
+        fabrikk.lukketPølse(p1) // vedtak fattet
+        fabrikk.lukketPølse(p2) // vedtak fattet
         fabrikk.nyPølse(p2Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
 
         val result = fabrikk.pakke()
@@ -103,8 +103,8 @@ class PølsefabrikkTest {
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
-        fabrikk.nyPølse(p1.lukket())
-        fabrikk.nyPølse(p2.lukket())
+        fabrikk.lukketPølse(p1)
+        fabrikk.lukketPølse(p2)
         fabrikk.nyPølse(p2Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
         fabrikk.nyPølse(p1Revurdering) // en ny pølse for p2 må bety at forrige pølse er avsluttet
 
@@ -130,8 +130,8 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
 
-        fabrikk.nyPølse(p1.lukket()) // vedtak fattet
-        fabrikk.nyPølse(p2.lukket()) // vedtak fattet
+        fabrikk.lukketPølse(p1) // vedtak fattet
+        fabrikk.lukketPølse(p2) // vedtak fattet
 
         fabrikk.nyPølse(p3)
         fabrikk.nyPølse(p2Revurdering)
@@ -163,16 +163,16 @@ class PølsefabrikkTest {
         fabrikk.nyPølse(p2)
         fabrikk.nyPølse(p3)
 
-        fabrikk.nyPølse(p1.lukket())
-        fabrikk.nyPølse(p2.lukket())
-        fabrikk.nyPølse(p3.lukket())
+        fabrikk.lukketPølse(p1)
+        fabrikk.lukketPølse(p2)
+        fabrikk.lukketPølse(p3)
 
         // endring på p1 trigger revurdering av alle påfølgende perioder
         fabrikk.nyPølse(p1Revurdering)
         fabrikk.nyPølse(p2Revurdering)
         fabrikk.nyPølse(p3Revurdering)
 
-        fabrikk.nyPølse(p1Revurdering.lukket())
+        fabrikk.lukketPølse(p1Revurdering)
 
         // korrigering av ferdigstilt revurdering på p1
         fabrikk.nyPølse(p1Revurdering2)
@@ -207,5 +207,9 @@ class PølsefabrikkTest {
         assertEquals(expected.size, actual.size)
         val ingenMatch = expected.map { it.dto() }.filterNot { it in actual }
         assertEquals(emptyList<PølseDto>(), ingenMatch) { "Det er pølser som ikke finnes i actual" }
+    }
+
+    private fun Pølsefabrikk.lukketPølse(pølse: Pølse) {
+        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, åpen = false)
     }
 }

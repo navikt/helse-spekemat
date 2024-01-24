@@ -17,7 +17,8 @@ import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 interface Pølsetjeneste {
-    fun håndter(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
+    fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
+    fun generasjonLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun slett(fnr: String)
 }
 
@@ -37,8 +38,20 @@ class Pølsetjenesten(
         sjekkOKResponse(request)
     }
 
-    override fun håndter(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
+    override fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
         val request = lagPølseRequest(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
+        sjekkOKResponse(request)
+    }
+
+    override fun generasjonLukket(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        generasjonId: UUID,
+        meldingsreferanseId: UUID,
+        hendelsedata: String
+    ) {
+        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, åpen = false, meldingsreferanseId, hendelsedata)
         sjekkOKResponse(request)
     }
 
@@ -60,6 +73,11 @@ class Pølsetjenesten(
         return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
+    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
+        val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, generasjonId, åpen, hendelsedata))
+        return lagPATCHRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
+    }
+
     private fun lagSlettRequest(fnr: String): HttpRequest {
         @Language("JSON")
         val requestBody = """{
@@ -69,13 +87,21 @@ class Pølsetjenesten(
     }
 
     private fun lagPOSTRequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
-        sikkerlogg.info("sender POST til <$uri> med {} og body:\n$body", kv("callId", callId))
+        return lagRequest(uri, "POST", body, callId)
+    }
+
+    private fun lagPATCHRequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
+        return lagRequest(uri, "PATCH", body, callId)
+    }
+
+    private fun lagRequest(uri: URI, method: String, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
+        sikkerlogg.info("sender $method til <$uri> med {} og body:\n$body", kv("callId", callId))
         return HttpRequest.newBuilder(uri)
             .header("Authorization", "Bearer ${azure.bearerToken(scope).token}")
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
             .header(CALL_ID_HEADER, "$callId")
-            .POST(BodyPublishers.ofString(body))
+            .method(method, BodyPublishers.ofString(body))
             .build()
     }
 
@@ -84,6 +110,16 @@ class Pølsetjenesten(
         val yrkesaktivitetidentifikator: String,
         val meldingsreferanseId: UUID,
         val pølse: PølseDto,
+        val hendelsedata: String
+    )
+
+    private data class OppdaterPølseRequest(
+        val fnr: String,
+        val yrkesaktivitetidentifikator: String,
+        val meldingsreferanseId: UUID,
+        val vedtaksperiodeId: UUID,
+        val generasjonId: UUID,
+        val åpen: Boolean,
         val hendelsedata: String
     )
 }

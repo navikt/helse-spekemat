@@ -20,7 +20,6 @@ import kotliquery.sessionOf
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 import org.junit.jupiter.api.parallel.Isolated
 import java.time.Instant
 import java.util.*
@@ -124,11 +123,13 @@ class E2ETest {
     fun `revurdering av førstegangsbehandling`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
         val v2 = enVedtaksperiode()
+        val g1 = enGenerasjonId()
+        val g2 = enGenerasjonId()
 
-        sendNyPølseRequest(FNR, A1, v1)
-        sendNyPølseRequest(FNR, A1, v2)
-        sendNyPølseRequest(FNR, A1, v1, åpen = false) // vedtak fattet
-        sendNyPølseRequest(FNR, A1, v2, åpen = false) // vedtak fattet
+        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
+        sendNyPølseRequest(FNR, A1, v2, generasjonId = g2)
+        sendOppdaterPølseRequest(FNR, A1, v1, g1, åpen = false) // vedtak fattet
+        sendOppdaterPølseRequest(FNR, A1, v2, g2, åpen = false) // vedtak fattet
 
         // revurdering i gang
         val revurderingkilde = UUID.randomUUID()
@@ -162,6 +163,7 @@ class E2ETest {
     }
 
     private fun enVedtaksperiode() = UUID.randomUUID()
+    private fun enGenerasjonId() = UUID.randomUUID()
 
     private fun verifiserPersonFinnes(fnr: String) {
         sessionOf(Database.dataSource).use {
@@ -204,19 +206,41 @@ private class TestContext(
         vedtaksperiodeId: UUID = UUID.randomUUID(),
         hendelseId: UUID = UUID.randomUUID(),
         kildeId: UUID = UUID.randomUUID(),
-        åpen: Boolean = true,
+        generasjonId: UUID = UUID.randomUUID()
     ): HttpResponse {
         return client.post("/api/pølse") {
             contentType(ContentType.Application.Json)
-            setBody(PølseRequest(
+            setBody(NyPølseRequest(
                 fnr = fnr,
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
-                pølse = PølseDto(
+                pølse = NyPølseDto(
                     vedtaksperiodeId = vedtaksperiodeId,
-                    generasjonId = UUID.randomUUID(),
-                    åpen = åpen,
+                    generasjonId = generasjonId,
                     kilde = kildeId
                 ),
+                meldingsreferanseId = hendelseId,
+                hendelsedata = "{}"
+            ))
+        }.also {
+            assertTrue(it.status.isSuccess())
+        }
+    }
+    suspend fun sendOppdaterPølseRequest(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        generasjonId: UUID,
+        åpen: Boolean,
+        hendelseId: UUID = UUID.randomUUID()
+    ): HttpResponse {
+        return client.patch("/api/pølse") {
+            contentType(ContentType.Application.Json)
+            setBody(OppdaterPølseRequest(
+                fnr = fnr,
+                yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
+                vedtaksperiodeId = vedtaksperiodeId,
+                generasjonId = generasjonId,
+                åpen = åpen,
                 meldingsreferanseId = hendelseId,
                 hendelsedata = "{}"
             ))

@@ -45,7 +45,7 @@ internal class GenerasjonOpprettetRiver(
         logg.info("Håndterer generasjon_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))
         sikkerlogg.info("Håndterer generasjon_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))
 
-        pølsetjeneste.håndter(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, packet.toJson())
+        pølsetjeneste.generasjonOpprettet(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, packet.toJson())
     }
 
     private fun JsonNode.asUUID() = UUID.fromString(asText())
