@@ -121,6 +121,37 @@ class E2ETest {
     }
 
     @Test
+    fun `revurdering av førstegangsbehandling`() = foredlerTestApp{
+        val v1 = enVedtaksperiode()
+        val v2 = enVedtaksperiode()
+
+        sendNyPølseRequest(FNR, A1, v1)
+        sendNyPølseRequest(FNR, A1, v2)
+        sendNyPølseRequest(FNR, A1, v1, åpen = false) // vedtak fattet
+        sendNyPølseRequest(FNR, A1, v2, åpen = false) // vedtak fattet
+
+        // revurdering i gang
+        val revurderingkilde = UUID.randomUUID()
+        sendNyPølseRequest(FNR, A1, v1, kildeId = revurderingkilde)
+        sendNyPølseRequest(FNR, A1, v2, kildeId = revurderingkilde)
+
+        sendHentPølserRequest(FNR).also { response ->
+            val result = response.body<PølserResponse>()
+            assertEquals(1, result.yrkesaktiviteter.size)
+            result.yrkesaktiviteter[0].also { a1 ->
+                assertEquals(A1, a1.yrkesaktivitetidentifikator)
+                assertEquals(2, a1.rader.size)
+
+                assertEquals(2, a1.rader[0].pølser.size)
+                assertTrue(a1.rader[0].pølser.all { it.åpen })
+
+                assertEquals(2, a1.rader[1].pølser.size)
+                assertTrue(a1.rader[1].pølser.none { it.åpen })
+            }
+        }
+    }
+
+    @Test
     fun `slette person`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
 
@@ -172,7 +203,8 @@ private class TestContext(
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID = UUID.randomUUID(),
         hendelseId: UUID = UUID.randomUUID(),
-        kildeId: UUID = UUID.randomUUID()
+        kildeId: UUID = UUID.randomUUID(),
+        åpen: Boolean = true,
     ): HttpResponse {
         return client.post("/api/pølse") {
             contentType(ContentType.Application.Json)
@@ -182,6 +214,7 @@ private class TestContext(
                 pølse = PølseDto(
                     vedtaksperiodeId = vedtaksperiodeId,
                     generasjonId = UUID.randomUUID(),
+                    åpen = åpen,
                     kilde = kildeId
                 ),
                 meldingsreferanseId = hendelseId,

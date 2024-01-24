@@ -27,11 +27,7 @@ class Pølsefabrikk private constructor(
         }
 
         val pølserad = pakken[0].nyPølserad(pølse)
-        // fjerner pølser med samme kilde fordi det må antyde en out of order-situasjon hvor vi:
-        // 1) først opprettes en ny pølse med kilde X, dvs. den legges bare til gjeldende rad. Den nye perioden trigger dog revurdering av senere perioder
-        // 2) så mottas generasjon_opprettet på etterfølgende perioder med kilde X, og det skal lages ny rad. Da må pølsen opprettet i steg 1) fjernes
-        //    fra raden som "pushes ned", og kun beholdes på siste/nyeste rad
-        pakken[0] = pakken[0].fjernPølserMedSammeKilde(pølse)
+        pakken[0] = pakken[0].fjernPølserTilBehandling()
         pakken.add(0, pølserad)
     }
 
@@ -45,10 +41,8 @@ data class Pølserad(
     fun skalLageNyRad(other: Pølse) =
         pølser.any { pølse -> other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde }
 
-    fun fjernPølserMedSammeKilde(other: Pølse) =
-        this.copy(
-            pølser = pølser.filterNot { it.kilde == other.kilde }
-        )
+    fun fjernPølserTilBehandling() =
+        this.copy(pølser = pølser.filterNot { it.åpen })
 
     fun nyPølserad(pølse: Pølse): Pølserad {
         return this
@@ -75,13 +69,16 @@ data class Pølserad(
 data class Pølse(
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
+    // hvorvidt generasjonen er åpen for endringer (dvs. til behandling) eller ikke (vedtak fattet / generasjon avsluttet)
+    val åpen: Boolean,
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 ) {
-    fun erNyPølseAv(other: Pølse) = this.vedtaksperiodeId == other.vedtaksperiodeId && this.kilde != other.kilde
+    fun erNyPølseAv(other: Pølse) = this.vedtaksperiodeId == other.vedtaksperiodeId && this.kilde != other.kilde && this.åpen
     fun dto() = PølseDto(
         vedtaksperiodeId = vedtaksperiodeId,
         generasjonId = generasjonId,
+        åpen = åpen,
         kilde = kilde
     )
 
@@ -89,6 +86,7 @@ data class Pølse(
         fun fraDto(dto: PølseDto) = Pølse(
             vedtaksperiodeId = dto.vedtaksperiodeId,
             generasjonId = dto.generasjonId,
+            åpen = dto.åpen,
             kilde = dto.kilde
         )
     }
@@ -101,6 +99,7 @@ data class PølseradDto(
 data class PølseDto(
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
+    val åpen: Boolean,
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 )
