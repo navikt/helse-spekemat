@@ -28,14 +28,18 @@ class Pølsetjenesten(
     }
     override fun slett(fnr: String) {
         val request = lagSlettRequest(fnr)
-        val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
-        sjekkOKResponse(response)
+        sjekkOKResponse(request)
     }
 
     override fun håndter(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
         val request = lagPølseRequest(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
+        sjekkOKResponse(request)
+    }
+
+    private fun sjekkOKResponse(request: HttpRequest) {
         val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
         sjekkOKResponse(response)
+        sikkerlogg.info("mottok ${response.body()}")
     }
 
     private fun sjekkOKResponse(response: HttpResponse<String>) {
@@ -57,10 +61,7 @@ class Pølsetjenesten(
             | },
             | "hendelsedata": "$hendelsedata"
             |}""".trimMargin()
-        return HttpRequest.newBuilder(URI("http://spekemat/api/pølse"))
-            .header("Authorization", "Bearer ${azure.bearerToken(scope).token}")
-            .POST(BodyPublishers.ofString(requestBody))
-            .build()
+        return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody)
     }
 
     private fun lagSlettRequest(fnr: String): HttpRequest {
@@ -68,9 +69,16 @@ class Pølsetjenesten(
         val requestBody = """{
             | "fnr": "$fnr"
             |}""".trimMargin()
-        return HttpRequest.newBuilder(URI("http://spekemat/api/slett"))
+        return lagPOSTRequest(URI("http://spekemat/api/slett"), requestBody)
+    }
+
+    private fun lagPOSTRequest(uri: URI, body: String): HttpRequest {
+        sikkerlogg.info("sender POST til $uri med body:\n$body")
+        return HttpRequest.newBuilder(uri)
             .header("Authorization", "Bearer ${azure.bearerToken(scope).token}")
-            .POST(BodyPublishers.ofString(requestBody))
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .POST(BodyPublishers.ofString(body))
             .build()
     }
 }
