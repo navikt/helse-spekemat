@@ -14,7 +14,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             feilmelding = "Ugyldig request"
         ))
         pølsetjeneste.slett(request.fnr)
-        call.respond(HttpStatusCode.OK)
+        call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
     }
 
     post("/api/pølse") {
@@ -22,7 +22,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             feilmelding = "Ugyldig request"
         ))
         pølsetjeneste.håndter(request.fnr, request.yrkesaktivitetidentifikator, request.pølse, request.meldingsreferanseId, request.hendelsedata)
-        call.respond(HttpStatusCode.OK)
+        call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
     }
 
     post("/api/pølser") {
