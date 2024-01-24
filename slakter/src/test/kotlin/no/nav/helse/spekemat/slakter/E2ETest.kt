@@ -50,7 +50,7 @@ class E2ETest {
         val kilde = UUID.randomUUID()
         val meldingsreferanseId = UUID.randomUUID()
 
-        mockResponse("OK", 200)
+        mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
         hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
 
         verifiserRequest(httpClientMock) { request ->
@@ -69,7 +69,7 @@ class E2ETest {
 
     @Test
     fun `slette person`() {
-        mockResponse("OK", 200)
+        mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
         hendelsefabrikk.sendSlettPerson()
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -77,10 +77,10 @@ class E2ETest {
         }
     }
 
-    private fun mockResponse(response: String, statusCode: Int? = null) {
+    private fun mockResponse(response: String, statusCode: Int? = null, headers: Map<String, String>? = null) {
         every {
             httpClientMock.send<String>(any(), any())
-        } returns MockHttpResponse(response, statusCode)
+        } returns MockHttpResponse(response, statusCode, headers)
     }
 
     private fun verifiserRequest(httpClient: HttpClient, sjekk: (HttpRequest) -> Boolean) {
