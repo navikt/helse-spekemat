@@ -25,6 +25,7 @@ fun main() {
             logg.info("Hei, er verden klar for pølser?")
             if (erUtvikling) SlettPersonRiver(this, pølsetjeneste)
             GenerasjonOpprettetRiver(this, pølsetjeneste)
+            GenerasjonLukketRiver(this, pølsetjeneste)
         }
         .start()
 }
