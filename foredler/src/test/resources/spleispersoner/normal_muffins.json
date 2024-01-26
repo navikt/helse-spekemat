@@ -1,0 +1,143 @@
+{
+  "data": {
+    "person": {
+      "arbeidsgivere": [
+        {
+          "organisasjonsnummer": "987654321",
+          "generasjoner": [
+            {
+              "id": "46a12479-fe47-431a-a3a0-4a4ad8061796",
+              "perioder": [
+                {
+                  "generasjonId": "cab3e239-e6dc-436f-a069-a884dfb8c049",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "16de338e-de98-486f-8e5c-0f1525c369e3",
+                  "periodetilstand": "VenterPaAnnenPeriode"
+                },
+                {
+                  "generasjonId": "7f694a95-eb2b-4b4d-b49c-aff255d8fe9c",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "64198b06-74ac-4392-9a22-de476124ba49",
+                  "periodetilstand": "UtbetaltVenterPaAnnenPeriode"
+                },
+                {
+                  "generasjonId": "9458f7f3-d23c-48c0-a1f7-ab0ff0322d17",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "82c4aa22-280b-4679-a702-379e43cf0f2d",
+                  "periodetilstand": "TilGodkjenning"
+                },
+                {
+                  "generasjonId": "9fd21855-b072-4f54-b5f1-cf1a6c660ad2",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "a0c9a631-6e59-41d4-89c5-a59c4bdb6ea2",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "b493f017-b8f6-4c7e-a23f-a1d923ecc60d",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "bebad8b0-271c-4624-8e8b-5430e640cdcd",
+                  "periodetilstand": "IngenUtbetaling"
+                }
+              ],
+              "kildeTilGenerasjon": "9458f7f3-d23c-48c0-a1f7-ab0ff0322d17"
+            },
+            {
+              "id": "30745822-8391-429f-9279-7560c06b155c",
+              "perioder": [
+                {
+                  "generasjonId": "ff0ee470-4ee1-4e6b-8656-3b6c996dc262",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "82c4aa22-280b-4679-a702-379e43cf0f2d",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "9fd21855-b072-4f54-b5f1-cf1a6c660ad2",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "a0c9a631-6e59-41d4-89c5-a59c4bdb6ea2",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "b493f017-b8f6-4c7e-a23f-a1d923ecc60d",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "bebad8b0-271c-4624-8e8b-5430e640cdcd",
+                  "periodetilstand": "IngenUtbetaling"
+                }
+              ],
+              "kildeTilGenerasjon": "9fd21855-b072-4f54-b5f1-cf1a6c660ad2"
+            },
+            {
+              "id": "bbca3aac-98ee-4641-802f-b5f5acbb22e3",
+              "perioder": [
+                {
+                  "generasjonId": "ff0ee470-4ee1-4e6b-8656-3b6c996dc262",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "82c4aa22-280b-4679-a702-379e43cf0f2d",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "0e3ce01c-6d8e-4c64-b8e6-981ee2f0147b",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "a0c9a631-6e59-41d4-89c5-a59c4bdb6ea2",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "b493f017-b8f6-4c7e-a23f-a1d923ecc60d",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "bebad8b0-271c-4624-8e8b-5430e640cdcd",
+                  "periodetilstand": "IngenUtbetaling"
+                }
+              ],
+              "kildeTilGenerasjon": "7f694a95-eb2b-4b4d-b49c-aff255d8fe9c"
+            },
+            {
+              "id": "27283872-b228-4668-978d-81ce068edfce",
+              "perioder": [
+                {
+                  "generasjonId": "f14631a1-295d-471e-b369-8f459191d505",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "64198b06-74ac-4392-9a22-de476124ba49",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "ff0ee470-4ee1-4e6b-8656-3b6c996dc262",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "82c4aa22-280b-4679-a702-379e43cf0f2d",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "0e3ce01c-6d8e-4c64-b8e6-981ee2f0147b",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "a0c9a631-6e59-41d4-89c5-a59c4bdb6ea2",
+                  "periodetilstand": "Utbetalt"
+                }
+              ],
+              "kildeTilGenerasjon": "0e3ce01c-6d8e-4c64-b8e6-981ee2f0147b"
+            },
+            {
+              "id": "6787a3a9-f50c-4c31-bca7-e7220e7241f0",
+              "perioder": [
+                {
+                  "generasjonId": "fd1e6478-1208-402b-b8b5-506c327c6692",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "64198b06-74ac-4392-9a22-de476124ba49",
+                  "periodetilstand": "Utbetalt"
+                },
+                {
+                  "generasjonId": "5ac7d24c-1fed-4067-9ad0-0a590599bb03",
+                  "kilde": "00000000-0000-0000-0000-000000000000",
+                  "vedtaksperiodeId": "82c4aa22-280b-4679-a702-379e43cf0f2d",
+                  "periodetilstand": "Utbetalt"
+                }
+              ],
+              "kildeTilGenerasjon": "5ac7d24c-1fed-4067-9ad0-0a590599bb03"
+            }
+          ]
+        },
+        {
+          "organisasjonsnummer": "112233445",
+          "generasjoner": []
+        }
+      ]
+    }
+  }
+}

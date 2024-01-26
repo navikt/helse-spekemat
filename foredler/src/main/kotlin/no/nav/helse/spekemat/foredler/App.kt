@@ -4,6 +4,7 @@ import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.CharArrayWriter
 import java.net.URI
+import java.net.http.HttpClient
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -68,9 +70,16 @@ fun launchApp(env: Map<String, String>) {
         maximumPoolSize = 2
         initializationFailTimeout = Duration.ofMinutes(5).toMillis()
     }
+
+    val httpClient = HttpClient.newHttpClient()
+    val azure = createAzureTokenClientFromEnvironment(env)
+    val cluster = System.getenv("NAIS_CLUSTER_NAME")
+    val scope = "api://$cluster.tbd.spleis-api/.default"
+    val spleisClient = SpleisClient(httpClient, azure, scope)
+
     val dsProvider = StaticDataSource(hikariConfig)
     val dao = PølseDao(dsProvider)
-    val pølsetjenesten = Pølsetjenesten(dao)
+    val pølsetjenesten = Pølsetjenesten(dao, spleisClient)
 
     val app = embeddedServer(
         factory = CIO,

@@ -2,6 +2,7 @@ import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 
 val mainClass = "no.nav.helse.spekemat.AppKt"
 
+val tbdLibsVersion = "2024.01.26-10.10-af0ac44d"
 val logbackClassicVersion = "1.4.14"
 val logbackEncoderVersion = "7.4"
 val jacksonVersion = "2.16.1"
@@ -12,6 +13,7 @@ val postgresqlVersion = "42.7.1"
 val kotliqueryVersion = "1.9.0"
 val micrometerRegistryPrometheusVersion = "1.12.0"
 val testcontainersVersion = "1.19.3"
+val mockKVersion = "1.13.9"
 
 plugins {
     id("com.bmuschko.docker-remote-api") version "9.4.0"
@@ -20,6 +22,8 @@ plugins {
 dependencies {
     api("ch.qos.logback:logback-classic:$logbackClassicVersion")
     api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion")
+
+    api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
 
     api("io.ktor:ktor-server-cio:$ktorVersion")
     api("io.ktor:ktor-server-call-id:$ktorVersion")
@@ -40,6 +44,9 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+
+    testImplementation("com.github.navikt.tbd-libs:mock-http-client:$tbdLibsVersion")
+    testImplementation("io.mockk:mockk:$mockKVersion")
 
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
