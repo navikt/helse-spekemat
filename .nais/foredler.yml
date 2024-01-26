@@ -23,10 +23,14 @@ spec:
   azure:
     application:
       enabled: true
+      tenant: nav.no
   accessPolicy:
     inbound:
       rules:
         - application: spekemat-slakter
+    outbound:
+      rules:
+        - application: spleis-api
   gcp:
     sqlInstances:
       - type: POSTGRES_15
