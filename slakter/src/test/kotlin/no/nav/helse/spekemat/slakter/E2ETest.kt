@@ -36,6 +36,7 @@ class E2ETest {
     private val testRapid = TestRapid().apply {
         GenerasjonOpprettetRiver(this, pølsetjeneste)
         GenerasjonLukketRiver(this, pølsetjeneste)
+        GenerasjonForkastetRiver(this, pølsetjeneste)
         SlettPersonRiver(this, pølsetjeneste)
     }
     private val hendelsefabrikk = Hendelsefabrikk(testRapid, FNR)
@@ -58,7 +59,8 @@ class E2ETest {
             val node = objectMapper.readTree(request.bodyAsString())
             val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
 
-            node.path("fnr").asText() == FNR
+            request.method() == "POST"
+                    && node.path("fnr").asText() == FNR
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
@@ -84,12 +86,41 @@ class E2ETest {
             val node = objectMapper.readTree(request.bodyAsString())
             val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
 
-            node.path("fnr").asText() == FNR
+            request.method() == "PATCH"
+                    && node.path("fnr").asText() == FNR
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
                     && node.path("generasjonId").asText() == generasjonId.toString()
+                    && node.path("status").asText() == "LUKKET"
                     && hendelseData.path("@event_name").asText() == "generasjon_lukket"
+        }
+    }
+
+    @Test
+    fun `generasjon forkastet`() {
+        val vedtaksperiodeId = UUID.randomUUID()
+        val kilde = UUID.randomUUID()
+        val meldingsreferanseId = UUID.randomUUID()
+        val generasjonId = UUID.randomUUID()
+
+        mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
+
+        hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, generasjonId = generasjonId)
+        hendelsefabrikk.sendGenerasjonForkastet(vedtaksperiodeId, ORGN, meldingsreferanseId, generasjonId)
+
+        verifiserRequest(httpClientMock) { request ->
+            val node = objectMapper.readTree(request.bodyAsString())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+
+            request.method() == "PATCH"
+                    && node.path("fnr").asText() == FNR
+                    && node.path("yrkesaktivitetidentifikator").asText() == ORGN
+                    && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
+                    && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
+                    && node.path("generasjonId").asText() == generasjonId.toString()
+                    && node.path("status").asText() == "FORKASTET"
+                    && hendelseData.path("@event_name").asText() == "generasjon_forkastet"
         }
     }
 
@@ -128,6 +159,9 @@ private class Hendelsefabrikk(
     fun sendGenerasjonLukket(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), generasjonId: UUID = UUID.randomUUID()) {
         rapidsConnection.sendTestMessage(lagGenerasjonLukket(meldingsreferanseId, vedtaksperiodeId, orgnr, generasjonId))
     }
+    fun sendGenerasjonForkastet(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), generasjonId: UUID = UUID.randomUUID()) {
+        rapidsConnection.sendTestMessage(lagGenerasjonForkastet(meldingsreferanseId, vedtaksperiodeId, orgnr, generasjonId))
+    }
     @Language("JSON")
     fun lagGenerasjonOpprettet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "generasjon_opprettet",
@@ -143,6 +177,15 @@ private class Hendelsefabrikk(
     @Language("JSON")
     fun lagGenerasjonLukket(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "generasjon_lukket",
+        |  "@id": "$meldingsreferanseId",
+        |  "fødselsnummer": "$fnr",
+        |  "organisasjonsnummer": "$orgnr",
+        |  "vedtaksperiodeId": "$vedtaksperiodeId",
+        |  "generasjonId": "$generasjonId"
+        |}""".trimMargin()
+    @Language("JSON")
+    fun lagGenerasjonForkastet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
+        |  "@event_name": "generasjon_forkastet",
         |  "@id": "$meldingsreferanseId",
         |  "fødselsnummer": "$fnr",
         |  "organisasjonsnummer": "$orgnr",

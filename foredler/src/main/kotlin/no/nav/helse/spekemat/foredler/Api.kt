@@ -24,7 +24,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
         val pølse = PølseDto(
             vedtaksperiodeId = request.pølse.vedtaksperiodeId,
             generasjonId = request.pølse.generasjonId,
-            åpen = true,
+            status = Pølsestatus.ÅPEN,
             kilde = request.pølse.kilde
         )
         pølsetjeneste.nyPølse(request.fnr, request.yrkesaktivitetidentifikator, pølse, request.meldingsreferanseId, request.hendelsedata)
@@ -35,7 +35,12 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
         val request = call.receiveNullable<OppdaterPølseRequest>() ?: return@patch call.respond(HttpStatusCode.BadRequest, FeilResponse(
             feilmelding = "Ugyldig request"
         ))
-        pølsetjeneste.oppdaterPølse(request.fnr, request.yrkesaktivitetidentifikator, request.vedtaksperiodeId, request.generasjonId, request.åpen, request.meldingsreferanseId, request.hendelsedata)
+        val status = when (request.status) {
+            PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
+            PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
+            PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
+        }
+        pølsetjeneste.oppdaterPølse(request.fnr, request.yrkesaktivitetidentifikator, request.vedtaksperiodeId, request.generasjonId, status, request.meldingsreferanseId, request.hendelsedata)
         call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
     }
 
@@ -64,12 +69,13 @@ data class NyPølseDto(
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 )
+enum class PølsestatusDto { ÅPEN, LUKKET, FORKASTET }
 data class OppdaterPølseRequest(
     val fnr: String,
     val yrkesaktivitetidentifikator: String,
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
-    val åpen: Boolean,
+    val status: PølsestatusDto,
     val meldingsreferanseId: UUID,
     val hendelsedata: String
 )

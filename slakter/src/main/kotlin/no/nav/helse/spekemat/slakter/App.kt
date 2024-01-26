@@ -26,6 +26,7 @@ fun main() {
             if (erUtvikling) SlettPersonRiver(this, pølsetjeneste)
             GenerasjonOpprettetRiver(this, pølsetjeneste)
             GenerasjonLukketRiver(this, pølsetjeneste)
+            GenerasjonForkastetRiver(this, pølsetjeneste)
         }
         .start()
 }

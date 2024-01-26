@@ -17,6 +17,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.statement.*
 import kotliquery.queryOf
 import kotliquery.sessionOf
+import no.nav.helse.spekemat.foredler.Pølsestatus.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -92,6 +93,36 @@ class E2ETest {
     }
 
     @Test
+    fun `et forkastet vedtak`() = foredlerTestApp {
+        val v1 = enVedtaksperiode()
+        val g1 = enGenerasjonId()
+        val g2 = enGenerasjonId()
+
+        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
+        sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
+
+        // annullering
+        val annulleringhendelse = UUID.randomUUID()
+        sendNyPølseRequest(FNR, A1, v1, generasjonId = g2, kildeId = annulleringhendelse)
+        sendOppdaterPølseRequest(FNR, A1, v1, g2, status = PølsestatusDto.FORKASTET, hendelseId = annulleringhendelse)
+
+        sendHentPølserRequest(FNR).also { response ->
+            val result = response.body<PølserResponse>()
+            assertEquals(1, result.yrkesaktiviteter.size)
+            result.yrkesaktiviteter[0].also { a1 ->
+                assertEquals(A1, a1.yrkesaktivitetidentifikator)
+                assertEquals(2, a1.rader.size)
+
+                assertEquals(1, a1.rader[0].pølser.size)
+                assertEquals(FORKASTET, a1.rader[0].pølser.single().status)
+
+                assertEquals(1, a1.rader[1].pølser.size)
+                assertEquals(LUKKET, a1.rader[1].pølser.single().status)
+            }
+        }
+    }
+
+    @Test
     fun `to vedtak to yrkesaktiviteter`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
         val v2 = enVedtaksperiode()
@@ -128,8 +159,8 @@ class E2ETest {
 
         sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
         sendNyPølseRequest(FNR, A1, v2, generasjonId = g2)
-        sendOppdaterPølseRequest(FNR, A1, v1, g1, åpen = false) // vedtak fattet
-        sendOppdaterPølseRequest(FNR, A1, v2, g2, åpen = false) // vedtak fattet
+        sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
+        sendOppdaterPølseRequest(FNR, A1, v2, g2, status = PølsestatusDto.LUKKET) // vedtak fattet
 
         // revurdering i gang
         val revurderingkilde = UUID.randomUUID()
@@ -144,10 +175,10 @@ class E2ETest {
                 assertEquals(2, a1.rader.size)
 
                 assertEquals(2, a1.rader[0].pølser.size)
-                assertTrue(a1.rader[0].pølser.all { it.åpen })
+                assertTrue(a1.rader[0].pølser.all { it.status == ÅPEN })
 
                 assertEquals(2, a1.rader[1].pølser.size)
-                assertTrue(a1.rader[1].pølser.none { it.åpen })
+                assertTrue(a1.rader[1].pølser.all { it.status == LUKKET })
             }
         }
     }
@@ -230,7 +261,7 @@ private class TestContext(
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
         generasjonId: UUID,
-        åpen: Boolean,
+        status: PølsestatusDto,
         hendelseId: UUID = UUID.randomUUID()
     ): HttpResponse {
         return client.patch("/api/pølse") {
@@ -240,7 +271,7 @@ private class TestContext(
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
                 vedtaksperiodeId = vedtaksperiodeId,
                 generasjonId = generasjonId,
-                åpen = åpen,
+                status = status,
                 meldingsreferanseId = hendelseId,
                 hendelsedata = "{}"
             ))

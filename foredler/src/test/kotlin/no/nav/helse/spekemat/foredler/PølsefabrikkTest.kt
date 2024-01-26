@@ -27,6 +27,18 @@ class PølsefabrikkTest {
     }
 
     @Test
+    fun `en forkastet ny pølse`() {
+        val p1 = 1.januar til 5.januar
+
+        fabrikk.nyPølse(p1)
+        fabrikk.pølseForkastet(p1)
+
+        val result = fabrikk.pakke()
+        assertEquals(1, result.size) // forventer én rad
+        assertEquals(setOf(p1.forkastet()), result.single()) // rekkefølgen på rad 1
+    }
+
+    @Test
     fun `to pølser`() {
         val p1 = 1.januar til 5.januar
         val p2 = 6.januar til 10.januar
@@ -37,6 +49,22 @@ class PølsefabrikkTest {
         val result = fabrikk.pakke()
         assertEquals(1, result.size) // forventer én rad
         assertEquals(setOf(p2, p1), result.single()) // rekkefølgen på rad 1
+    }
+
+    @Test
+    fun `ett forkastet vedtak`() {
+        val p1 = 1.januar til 5.januar
+        val p1Annullert = p1.fordi(UUID.randomUUID())
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p1Annullert)
+        fabrikk.pølseForkastet(p1Annullert)
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size)
+        assertEquals(setOf(p1Annullert.forkastet()), result[0])
+        assertEquals(setOf(p1.lukket()), result[1])
     }
 
     @Test
@@ -188,14 +216,15 @@ class PølsefabrikkTest {
     private fun pølse(
         vedtaksperiodeId: UUID,
         kilde: UUID = UUID.randomUUID(),
-        åpen: Boolean = true,
-    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), åpen, kilde)
+        status: Pølsestatus = Pølsestatus.ÅPEN
+    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), status, kilde)
 
     private infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
     private infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
     private infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
 
-    private fun Pølse.lukket() = this.copy(åpen = false)
+    private fun Pølse.lukket() = this.copy(status = Pølsestatus.LUKKET)
+    private fun Pølse.forkastet() = this.copy(status = Pølsestatus.FORKASTET)
 
     private val mandag = LocalDate.of(2018, 1, 1)
     private val Int.januar get() = mandag.withDayOfMonth(this).withMonth(1)
@@ -210,6 +239,10 @@ class PølsefabrikkTest {
     }
 
     private fun Pølsefabrikk.lukketPølse(pølse: Pølse) {
-        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, åpen = false)
+        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.LUKKET)
+    }
+
+    private fun Pølsefabrikk.pølseForkastet(pølse: Pølse) {
+        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.FORKASTET)
     }
 }

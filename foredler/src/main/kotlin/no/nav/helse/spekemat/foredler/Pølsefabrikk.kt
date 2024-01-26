@@ -1,5 +1,6 @@
 package no.nav.helse.spekemat.foredler
 
+import no.nav.helse.spekemat.foredler.Pølsestatus.ÅPEN
 import java.util.*
 
 class Pølsefabrikk private constructor(
@@ -17,8 +18,8 @@ class Pølsefabrikk private constructor(
         pakken[0] = pakken[0].nyPølse(pølse)
     }
 
-    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): PølseDto {
-        pakken[0] = pakken[0].oppdaterPølse(vedtaksperiodeId, generasjonId, åpen)
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): PølseDto {
+        pakken[0] = pakken[0].oppdaterPølse(vedtaksperiodeId, generasjonId, status)
         return pakken[0].pølser.single { it.vedtaksperiodeId == vedtaksperiodeId }.dto()
     }
 
@@ -46,7 +47,7 @@ data class Pølserad(
         pølser.any { pølse -> other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde }
 
     fun fjernPølserTilBehandling() =
-        this.copy(pølser = pølser.filterNot { it.åpen })
+        this.copy(pølser = pølser.filterNot { it.status == ÅPEN })
 
     fun nyPølserad(pølse: Pølse): Pølserad {
         return this
@@ -61,9 +62,9 @@ data class Pølserad(
         )
     }
 
-    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): Pølserad {
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): Pølserad {
         return this.copy(
-            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, åpen) }
+            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, status) }
         )
     }
     fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)
@@ -76,37 +77,37 @@ data class Pølserad(
     }
 }
 
+enum class Pølsestatus { ÅPEN, LUKKET, FORKASTET }
+
 data class Pølse(
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
     // hvorvidt generasjonen er åpen for endringer (dvs. til behandling) eller ikke (vedtak fattet / generasjon avsluttet)
-    val åpen: Boolean,
+    val status: Pølsestatus,
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 ) {
-    fun erNyPølseAv(other: Pølse) = this.vedtaksperiodeId == other.vedtaksperiodeId && this.kilde != other.kilde && this.åpen
+    fun erNyPølseAv(other: Pølse) = this.vedtaksperiodeId == other.vedtaksperiodeId && this.kilde != other.kilde && this.status == ÅPEN
     fun dto() = PølseDto(
         vedtaksperiodeId = vedtaksperiodeId,
         generasjonId = generasjonId,
-        åpen = åpen,
+        status = status,
         kilde = kilde
     )
 
-    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean): Pølse {
+    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): Pølse {
         if (this.vedtaksperiodeId != vedtaksperiodeId) return this
         check(this.generasjonId == generasjonId) {
             "Det er gjort forsøk på å oppdatere en generasjon som ikke samsvarer med den som er registrert i nyeste rad"
         }
-        return this.copy(
-            åpen = åpen
-        )
+        return this.copy(status = status)
     }
 
     companion object {
         fun fraDto(dto: PølseDto) = Pølse(
             vedtaksperiodeId = dto.vedtaksperiodeId,
             generasjonId = dto.generasjonId,
-            åpen = dto.åpen,
+            status = dto.status,
             kilde = dto.kilde
         )
     }
@@ -119,7 +120,7 @@ data class PølseradDto(
 data class PølseDto(
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
-    val åpen: Boolean,
+    val status: Pølsestatus,
     // tingen som gjorde at generasjonen ble opprettet
     val kilde: UUID
 )

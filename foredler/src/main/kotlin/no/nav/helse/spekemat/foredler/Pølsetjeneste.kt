@@ -6,7 +6,7 @@ import java.util.*
 
 interface Pølsetjeneste {
     fun nyPølse(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
-    fun oppdaterPølse(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean, meldingsreferanseId: UUID, hendelsedata: String)
+    fun oppdaterPølse(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus, meldingsreferanseId: UUID, hendelsedata: String)
     fun hent(fnr: String): List<YrkesaktivitetDto>
     fun slett(fnr: String)
 }
@@ -29,12 +29,12 @@ class Pølsetjenesten(private val dao: PølseDao) : Pølsetjeneste {
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
         generasjonId: UUID,
-        åpen: Boolean,
+        status: Pølsestatus,
         meldingsreferanseId: UUID,
         hendelsedata: String
     ) {
         val fabrikk = dao.hent(fnr, yrkesaktivitetidentifikator) ?: return oppdatererIkkePølse(fnr, vedtaksperiodeId, generasjonId)
-        val pølse = fabrikk.oppdaterPølse(vedtaksperiodeId, generasjonId, åpen)
+        val pølse = fabrikk.oppdaterPølse(vedtaksperiodeId, generasjonId, status)
 
         val resultat = fabrikk.pakke()
         dao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, hendelsedata)

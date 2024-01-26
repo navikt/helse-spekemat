@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import net.logstash.logback.argument.StructuredArguments.kv
+import no.nav.helse.spekemat.slakter.PølsestatusDto.*
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -19,6 +20,7 @@ import kotlin.jvm.optionals.getOrNull
 interface Pølsetjeneste {
     fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
     fun generasjonLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
+    fun generasjonForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun slett(fnr: String)
 }
 
@@ -51,7 +53,19 @@ class Pølsetjenesten(
         meldingsreferanseId: UUID,
         hendelsedata: String
     ) {
-        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, åpen = false, meldingsreferanseId, hendelsedata)
+        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = LUKKET, meldingsreferanseId, hendelsedata)
+        sjekkOKResponse(request)
+    }
+
+    override fun generasjonForkastet(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        generasjonId: UUID,
+        meldingsreferanseId: UUID,
+        hendelsedata: String
+    ) {
+        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = FORKASTET, meldingsreferanseId, hendelsedata)
         sjekkOKResponse(request)
     }
 
@@ -73,8 +87,8 @@ class Pølsetjenesten(
         return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
-    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, åpen: Boolean, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
-        val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, generasjonId, åpen, hendelsedata))
+    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, status: PølsestatusDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
+        val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, generasjonId, status, hendelsedata))
         return lagPATCHRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
@@ -119,10 +133,12 @@ class Pølsetjenesten(
         val meldingsreferanseId: UUID,
         val vedtaksperiodeId: UUID,
         val generasjonId: UUID,
-        val åpen: Boolean,
+        val status: PølsestatusDto,
         val hendelsedata: String
     )
 }
+
+enum class PølsestatusDto { LUKKET, FORKASTET }
 
 data class PølseDto(
     val vedtaksperiodeId: UUID,
