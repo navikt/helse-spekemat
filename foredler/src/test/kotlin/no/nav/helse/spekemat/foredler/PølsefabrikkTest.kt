@@ -27,6 +27,33 @@ class PølsefabrikkTest {
     }
 
     @Test
+    fun `en duplikat ny pølse`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = p1 fordi UUID.randomUUID()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+
+        val result = fabrikk.pakke()
+        assertEquals(1, result.size) // forventer én rad
+        assertEquals(setOf(p1), result.single()) // rekkefølgen på rad 1
+    }
+
+    @Test
+    fun `en duplikat ny pølse etter at pølsen er lukket`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = p1 fordi UUID.randomUUID()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p2) // f.eks. at spekemat har lest inn generasjon_opprettet på nytt, eller at noen har sendt feil
+
+        val result = fabrikk.pakke()
+        assertEquals(1, result.size) // forventer én rad
+        assertEquals(setOf(p1.lukket()), result.single()) // rekkefølgen på rad 1
+    }
+
+    @Test
     fun `en forkastet ny pølse`() {
         val p1 = 1.januar til 5.januar
 
@@ -54,7 +81,7 @@ class PølsefabrikkTest {
     @Test
     fun `ett forkastet vedtak`() {
         val p1 = 1.januar til 5.januar
-        val p1Annullert = p1.fordi(UUID.randomUUID())
+        val p1Annullert = p1.nyGenerasjon()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -103,7 +130,7 @@ class PølsefabrikkTest {
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
         val revurderingkilde = UUID.randomUUID()
-        val p2Revurdering = p2.fordi(revurderingkilde)
+        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -126,8 +153,8 @@ class PølsefabrikkTest {
 
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
-        val p2Revurdering = p2.fordi(revurderingkilde)
-        val p1Revurdering = p1.fordi(revurderingkilde)
+        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
+        val p1Revurdering = p1.nyGenerasjon(kilde = revurderingkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -152,8 +179,8 @@ class PølsefabrikkTest {
         val p1 = 10.januar til 20.januar som v1
         val p2 = 21.januar til 31.januar som v2
         val p3 = 1.januar til 5.januar som v3 fordi oufOrderOrderkilde
-        val p2Revurdering = p2.fordi(oufOrderOrderkilde)
-        val p1Revurdering = p1.fordi(oufOrderOrderkilde)
+        val p2Revurdering = p2.nyGenerasjon(kilde = oufOrderOrderkilde)
+        val p1Revurdering = p1.nyGenerasjon(kilde = oufOrderOrderkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -182,10 +209,10 @@ class PølsefabrikkTest {
         val p1 = 10.januar til 20.januar som v2
         val p2 = 21.januar til 31.januar som v3
 
-        val p3Revurdering = p3.fordi(revurderingkilde)
-        val p2Revurdering = p2.fordi(revurderingkilde)
-        val p1Revurdering = p1.fordi(revurderingkilde)
-        val p1Revurdering2 = p1.fordi(UUID.randomUUID())
+        val p3Revurdering = p3.nyGenerasjon(kilde = revurderingkilde)
+        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
+        val p1Revurdering = p1.nyGenerasjon(kilde = revurderingkilde)
+        val p1Revurdering2 = p1.nyGenerasjon(kilde = UUID.randomUUID())
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -221,6 +248,7 @@ class PølsefabrikkTest {
 
     private infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
     private infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
+    private fun Pølse.nyGenerasjon(generasjonId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID()) = fordi(kilde).copy(generasjonId = UUID.randomUUID())
     private infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
 
     private fun Pølse.lukket() = this.copy(status = Pølsestatus.LUKKET)
