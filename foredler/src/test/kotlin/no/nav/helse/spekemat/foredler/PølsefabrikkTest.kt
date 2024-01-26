@@ -1,19 +1,10 @@
 package no.nav.helse.spekemat.foredler
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
 import java.util.*
 
-class PølsefabrikkTest {
-
-    private lateinit var fabrikk: Pølsefabrikk
-
-    @BeforeEach
-    fun setup() {
-        fabrikk = Pølsefabrikk()
-    }
+class PølsefabrikkTest : PølseTest() {
 
     @Test
     fun `en ny pølse`() {
@@ -24,33 +15,6 @@ class PølsefabrikkTest {
         val result = fabrikk.pakke()
         assertEquals(1, result.size) // forventer én rad
         assertEquals(setOf(p1), result.single()) // rekkefølgen på rad 1
-    }
-
-    @Test
-    fun `en duplikat ny pølse`() {
-        val p1 = 1.januar til 5.januar
-        val p2 = p1 fordi UUID.randomUUID()
-
-        fabrikk.nyPølse(p1)
-        fabrikk.nyPølse(p2)
-
-        val result = fabrikk.pakke()
-        assertEquals(1, result.size) // forventer én rad
-        assertEquals(setOf(p1), result.single()) // rekkefølgen på rad 1
-    }
-
-    @Test
-    fun `en duplikat ny pølse etter at pølsen er lukket`() {
-        val p1 = 1.januar til 5.januar
-        val p2 = p1 fordi UUID.randomUUID()
-
-        fabrikk.nyPølse(p1)
-        fabrikk.lukketPølse(p1)
-        fabrikk.nyPølse(p2) // f.eks. at spekemat har lest inn generasjon_opprettet på nytt, eller at noen har sendt feil
-
-        val result = fabrikk.pakke()
-        assertEquals(1, result.size) // forventer én rad
-        assertEquals(setOf(p1.lukket()), result.single()) // rekkefølgen på rad 1
     }
 
     @Test
@@ -238,39 +202,5 @@ class PølsefabrikkTest {
         assertEquals(setOf(p3Revurdering, p2Revurdering, p1Revurdering2), result[0])
         assertEquals(setOf(p1Revurdering.lukket()), result[1])
         assertEquals(setOf(p3.lukket(), p2.lukket(), p1.lukket()), result[2])
-    }
-
-    private fun pølse(
-        vedtaksperiodeId: UUID,
-        kilde: UUID = UUID.randomUUID(),
-        status: Pølsestatus = Pølsestatus.ÅPEN
-    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), status, kilde)
-
-    private infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
-    private infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
-    private fun Pølse.nyGenerasjon(generasjonId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID()) = fordi(kilde).copy(generasjonId = UUID.randomUUID())
-    private infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
-
-    private fun Pølse.lukket() = this.copy(status = Pølsestatus.LUKKET)
-    private fun Pølse.forkastet() = this.copy(status = Pølsestatus.FORKASTET)
-
-    private val mandag = LocalDate.of(2018, 1, 1)
-    private val Int.januar get() = mandag.withDayOfMonth(this).withMonth(1)
-
-    private fun assertEquals(expected: Set<Pølse>, actual: PølseradDto) {
-        assertEquals(expected, actual.pølser)
-    }
-    private fun assertEquals(expected: Set<Pølse>, actual: List<PølseDto>) {
-        assertEquals(expected.size, actual.size)
-        val ingenMatch = expected.map { it.dto() }.filterNot { it in actual }
-        assertEquals(emptyList<PølseDto>(), ingenMatch) { "Det er pølser som ikke finnes i actual" }
-    }
-
-    private fun Pølsefabrikk.lukketPølse(pølse: Pølse) {
-        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.LUKKET)
-    }
-
-    private fun Pølsefabrikk.pølseForkastet(pølse: Pølse) {
-        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.FORKASTET)
     }
 }

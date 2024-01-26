@@ -14,9 +14,15 @@ class Pølsefabrikk private constructor(
     }
 
     fun nyPølse(pølse: Pølse) {
+        if (håndtertFør(pølse)) return
         if (skalLageNyrad(pølse)) return lagNyRad(pølse)
         pakken[0] = pakken[0].nyPølse(pølse)
     }
+
+    private fun håndtertFør(pølse: Pølse) =
+        pakken.any { rad ->
+            rad.pølser.any { it.generasjonId == pølse.generasjonId }
+        }
 
     fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): PølseDto {
         pakken[0] = pakken[0].oppdaterPølse(vedtaksperiodeId, generasjonId, status)
@@ -55,8 +61,6 @@ data class Pølserad(
             .copy(kildeTilRad = pølse.kilde)
     }
     fun nyPølse(pølse: Pølse): Pølserad {
-        // har håndtert pølsen før
-        if (pølser.any { it.generasjonId == pølse.generasjonId }) return this
         return this.copy(
             pølser = pølser
                 .filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId }
@@ -91,12 +95,7 @@ data class Pølse(
 ) {
     fun erNyPølseAv(other: Pølse): Boolean {
         // må være samme vedtaksperiode
-        if (this.vedtaksperiodeId != other.vedtaksperiodeId) return false
-        // lik kilde == duplikat av noe vi har håndtert før
-        if (this.kilde == other.kilde) return false
-        // lik generasjonId == duplikat av noe vi har håndtert før
-        if (this.generasjonId == other.generasjonId) return false
-        return this.status == ÅPEN && other.status != ÅPEN
+        return this.vedtaksperiodeId == other.vedtaksperiodeId
     }
     fun dto() = PølseDto(
         vedtaksperiodeId = vedtaksperiodeId,
