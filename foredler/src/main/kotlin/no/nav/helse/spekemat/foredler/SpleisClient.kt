@@ -33,7 +33,9 @@ class SpleisClient(
         val request = lagRequest(fnr)
         val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
         val responseBody = response.body()
-        sikkerlogg.info("mottok ${response.statusCode()}:\n$responseBody")
+        val statusCode = response.statusCode()
+        sikkerlogg.info("mottok $statusCode:\n$responseBody")
+        if (statusCode != 200) throw SpleisClientException("Fikk uventet http statuskode fra spleis: $statusCode. Forventet HTTP 200 OK")
         return parsePølsefabrikker(responseBody)
     }
 
@@ -45,7 +47,11 @@ class SpleisClient(
         .build()
 
     private fun parsePølsefabrikker(body: String): List<YrkesaktivitetDto> {
-        val response = objectMapper.readValue<SpleisResponse>(body)
+        val response = try {
+            objectMapper.readValue<SpleisResponse>(body)
+        } catch (err: Exception) {
+            throw SpleisClientException("Feil ved tolkning av responsen fra Spleis", err)
+        }
         return response.data.person.arbeidsgivere.map { arbeidsgiver ->
             parseYrkesaktivitet(arbeidsgiver)
         }
@@ -97,6 +103,7 @@ class SpleisClient(
     }
 }
 
+class SpleisClientException(override val message: String, override val cause: Throwable? = null) : RuntimeException()
 
 data class SpleisResponse(
     val data: SpleisDataResponse
