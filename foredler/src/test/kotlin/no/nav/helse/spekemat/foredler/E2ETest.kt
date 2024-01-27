@@ -19,7 +19,6 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -35,7 +34,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.parallel.Isolated
 import java.net.ServerSocket
 import java.time.Instant
 import java.time.LocalDateTime

@@ -10,10 +10,12 @@ import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverRes
 import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse
 import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand
 import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand.*
+import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
+import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse.BodyHandlers
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -40,13 +42,17 @@ class SpleisClient(
         return parsePølsefabrikker(responseBody)
     }
 
-    private fun lagRequest(fnr: String, callId: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/person-json/"))
-        .header("fnr", fnr)
-        .header("Accept", "application/json")
-        .header(CALL_ID_HEADER, callId)
-        .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
-        .GET()
-        .build()
+    private fun lagRequest(fnr: String, callId: String): HttpRequest {
+        @Language("JSON")
+        val requestBody = """{ "variables": { "fnr": "$fnr" } }"""
+        return HttpRequest.newBuilder(URI("http://spleis-api/graphql"))
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .header(CALL_ID_HEADER, callId)
+            .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
+            .POST(BodyPublishers.ofString(requestBody))
+            .build()
+    }
 
     private fun parsePølsefabrikker(body: String): List<YrkesaktivitetDto> {
         val response = try {
