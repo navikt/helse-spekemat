@@ -55,7 +55,6 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
 data class SlettRequest(val fnr: String)
 data class PølserRequest(val fnr: String)
 data class PølserResponse(val yrkesaktiviteter: List<YrkesaktivitetDto>)
-data class FeilResponse(val feilmelding: String)
 data class NyPølseRequest(
     val fnr: String,
     val yrkesaktivitetidentifikator: String,

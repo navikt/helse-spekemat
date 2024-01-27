@@ -18,6 +18,7 @@ import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -117,6 +118,13 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
         disableDefaultColors()
         filter { call -> call.request.path().startsWith("/api/") }
     }
+    install(StatusPages) {
+        exception<Throwable> { call, cause ->
+            call.respond(HttpStatusCode.InternalServerError, FeilResponse(
+                feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}"
+            ))
+        }
+    }
     install(ContentNegotiation) {
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
@@ -147,6 +155,8 @@ private fun migrate(config: HikariConfig) {
             .migrate()
     }
 }
+
+data class FeilResponse(val feilmelding: String)
 
 private const val isaliveEndpoint = "/isalive"
 private const val isreadyEndpoint = "/isready"

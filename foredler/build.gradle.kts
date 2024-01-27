@@ -27,6 +27,7 @@ dependencies {
 
     api("io.ktor:ktor-server-cio:$ktorVersion")
     api("io.ktor:ktor-server-call-id:$ktorVersion")
+    api("io.ktor:ktor-server-status-pages:$ktorVersion")
     api("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     api("io.ktor:ktor-serialization-jackson:$ktorVersion")
     api("io.ktor:ktor-server-auth:$ktorVersion")
@@ -44,6 +45,9 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.7")
+    implementation("io.ktor:ktor-server-host-common-jvm:2.3.7")
+    implementation("io.ktor:ktor-server-status-pages-jvm:2.3.7")
 
     testImplementation("com.github.navikt.tbd-libs:mock-http-client:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockKVersion")
