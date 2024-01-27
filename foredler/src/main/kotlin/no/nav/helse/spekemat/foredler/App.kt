@@ -15,6 +15,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -119,6 +120,11 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
         filter { call -> call.request.path().startsWith("/api/") }
     }
     install(StatusPages) {
+        exception<BadRequestException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, FeilResponse(
+                feilmelding = "Ugyldig request: ${cause.message}\n${cause.stackTraceToString()}"
+            ))
+        }
         exception<Throwable> { call, cause ->
             call.respond(HttpStatusCode.InternalServerError, FeilResponse(
                 feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}"

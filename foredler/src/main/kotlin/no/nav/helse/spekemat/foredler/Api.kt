@@ -2,6 +2,8 @@ package no.nav.helse.spekemat.foredler
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
+import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -27,7 +29,15 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             status = Pølsestatus.ÅPEN,
             kilde = request.pølse.kilde
         )
-        pølsetjeneste.nyPølse(request.fnr, request.yrkesaktivitetidentifikator, pølse, request.meldingsreferanseId, request.hendelsedata)
+        val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
+        pølsetjeneste.nyPølse(
+            request.fnr,
+            request.yrkesaktivitetidentifikator,
+            pølse,
+            request.meldingsreferanseId,
+            request.hendelsedata,
+            callId
+        )
         call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
     }
 
@@ -40,7 +50,17 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
             PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
         }
-        pølsetjeneste.oppdaterPølse(request.fnr, request.yrkesaktivitetidentifikator, request.vedtaksperiodeId, request.generasjonId, status, request.meldingsreferanseId, request.hendelsedata)
+        val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
+        pølsetjeneste.oppdaterPølse(
+            request.fnr,
+            request.yrkesaktivitetidentifikator,
+            request.vedtaksperiodeId,
+            request.generasjonId,
+            status,
+            request.meldingsreferanseId,
+            request.hendelsedata,
+            callId
+        )
         call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
     }
 

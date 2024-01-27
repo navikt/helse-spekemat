@@ -28,9 +28,10 @@ class SpleisClient(
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
+        private const val CALL_ID_HEADER = "callId"
     }
-    fun hentSpeilJson(fnr: String): List<YrkesaktivitetDto> {
-        val request = lagRequest(fnr)
+    fun hentSpeilJson(fnr: String, callId: String = UUID.randomUUID().toString()): List<YrkesaktivitetDto> {
+        val request = lagRequest(fnr, callId)
         val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
         val responseBody = response.body()
         val statusCode = response.statusCode()
@@ -39,9 +40,10 @@ class SpleisClient(
         return parsePølsefabrikker(responseBody)
     }
 
-    private fun lagRequest(fnr: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/person-json/"))
+    private fun lagRequest(fnr: String, callId: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/person-json/"))
         .header("fnr", fnr)
         .header("Accept", "application/json")
+        .header(CALL_ID_HEADER, callId)
         .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
         .GET()
         .build()
