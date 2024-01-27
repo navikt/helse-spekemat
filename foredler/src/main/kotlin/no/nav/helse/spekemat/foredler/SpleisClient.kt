@@ -39,7 +39,7 @@ class SpleisClient(
         return parsePølsefabrikker(responseBody)
     }
 
-    private fun lagRequest(fnr: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/speil-person/"))
+    private fun lagRequest(fnr: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/person-json/"))
         .header("fnr", fnr)
         .header("Accept", "application/json")
         .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
