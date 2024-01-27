@@ -1,7 +1,6 @@
 package no.nav.helse.spekemat.foredler
 
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -11,6 +10,7 @@ import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.Spleis
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand.*
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -25,16 +25,24 @@ class SpleisClient(
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 ) {
-    fun hentSpeilJson(fnr: String): List<YrkesaktivitetDto> {
-        val request = HttpRequest.newBuilder(URI("http://spleis-api/api/speil-person/"))
-            .header("fnr", fnr)
-            .header("Accept", "application/json")
-            .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
-            .GET()
-            .build()
-        val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
-        return parsePølsefabrikker(response.body())
+    private companion object {
+        private val logg = LoggerFactory.getLogger(this::class.java)
+        private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
     }
+    fun hentSpeilJson(fnr: String): List<YrkesaktivitetDto> {
+        val request = lagRequest(fnr)
+        val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
+        val responseBody = response.body()
+        sikkerlogg.info("mottok ${response.statusCode()}:\n$responseBody")
+        return parsePølsefabrikker(responseBody)
+    }
+
+    private fun lagRequest(fnr: String) = HttpRequest.newBuilder(URI("http://spleis-api/api/speil-person/"))
+        .header("fnr", fnr)
+        .header("Accept", "application/json")
+        .header("Authorization", "Bearer ${tokenProvider.bearerToken(scope).token}")
+        .GET()
+        .build()
 
     private fun parsePølsefabrikker(body: String): List<YrkesaktivitetDto> {
         val response = objectMapper.readValue<SpleisResponse>(body)

@@ -3,14 +3,14 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                [ÅPEN LOG] %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n
+                [ÅPEN LOG] %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg %mdc%n
             </pattern>
         </encoder>
     </appender>
     <appender name="SIKKER" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                [SIKRET LOG] %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n
+                [SIKRET LOG] %d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg %mdc%n
             </pattern>
         </encoder>
     </appender>

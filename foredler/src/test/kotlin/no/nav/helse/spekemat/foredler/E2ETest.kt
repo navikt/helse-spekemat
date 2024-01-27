@@ -288,7 +288,7 @@ class E2ETest {
         ))
         every {
             mockHttpClient.send<String>(any(), any())
-        } returns MockHttpResponse(responseBody)
+        } returns MockHttpResponse(responseBody, statusCode = 200)
     }
 
     private fun foredlerTestApp(testblokk: suspend TestContext.() -> Unit) {
