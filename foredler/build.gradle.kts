@@ -12,7 +12,6 @@ val hikariCPVersion = "5.1.0"
 val postgresqlVersion = "42.7.1"
 val kotliqueryVersion = "1.9.0"
 val micrometerRegistryPrometheusVersion = "1.12.0"
-val testcontainersVersion = "1.19.3"
 val mockKVersion = "1.13.9"
 
 plugins {
@@ -49,20 +48,24 @@ dependencies {
     implementation("io.ktor:ktor-server-host-common-jvm:2.3.7")
     implementation("io.ktor:ktor-server-status-pages-jvm:2.3.7")
 
+    testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
     testImplementation("com.github.navikt.tbd-libs:mock-http-client:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockKVersion")
 
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-    testImplementation("org.testcontainers:postgresql:$testcontainersVersion") {
-        exclude("junit", "junit")
-    }
-    testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
 }
 
 tasks {
     withType<Jar>() {
         finalizedBy(":foredler:remove_db_container")
+    }
+
+    withType<Test> {
+        systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+        systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
+        systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", "4")
     }
 }
 

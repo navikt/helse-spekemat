@@ -9,16 +9,22 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureToken
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.mock.MockHttpResponse
+import com.github.navikt.tbd_libs.test_support.DatabaseContainers
+import com.github.navikt.tbd_libs.test_support.TestDataSource
+import com.zaxxer.hikari.HikariConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.network.sockets.*
 import io.ktor.serialization.jackson.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.engine.*
 import io.ktor.server.testing.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.statement.*
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -30,18 +36,21 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Isolated
+import java.net.ServerSocket
 import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
-@Isolated
 class E2ETest {
     private companion object {
         const val FNR = "12345678911"
         const val A1 = "987654321"
         const val A2 = "112233445"
+        private val databaseContainer = DatabaseContainers.container("spekemat", "person, hendelse")
     }
-    private val dao = PølseDao { Database.dataSource }
+
+    private lateinit var dataSource: TestDataSource
+    private val dao = PølseDao { dataSource.ds }
     private val tokenProvider = object : AzureTokenProvider {
         override fun bearerToken(scope: String) = AzureToken("a token", LocalDateTime.MAX)
         override fun onBehalfOfToken(scope: String, token: String): AzureToken {
@@ -57,6 +66,7 @@ class E2ETest {
 
     @BeforeEach
     fun setup() {
+        dataSource = databaseContainer.nyTilkobling()
         mockSpleisResponse(listOf(
             SpleisPersonResponse.SpleisArbeidsgiverResponse(
                 organisasjonsnummer = A1,
@@ -67,7 +77,7 @@ class E2ETest {
 
     @AfterEach
     fun teardown() {
-        Database.reset()
+        databaseContainer.droppTilkobling(dataSource)
         clearMocks(mockHttpClient)
     }
 
@@ -259,17 +269,17 @@ class E2ETest {
     private fun enGenerasjonId() = UUID.randomUUID()
 
     private fun verifiserPersonFinnes(fnr: String) {
-        sessionOf(Database.dataSource).use {
+        sessionOf(dataSource.ds).use {
             assertEquals(true, it.run(queryOf("SELECT EXISTS(SELECT 1 FROM person WHERE fnr = ?)", fnr).map { row -> row.boolean(1) }.asSingle))
         }
     }
     private fun verifiserHendelseFinnes(id: UUID) {
-        sessionOf(Database.dataSource).use {
+        sessionOf(dataSource.ds).use {
             assertEquals(true, it.run(queryOf("SELECT EXISTS(SELECT 1 FROM hendelse WHERE meldingsreferanse_id = ?)", id).map { row -> row.boolean(1) }.asSingle))
         }
     }
     private fun verifiserPølsepakkeFinnes(fnr: String, yrkesaktivitetidentifikator: String, hendelseId: UUID, kildeId: UUID) {
-        sessionOf(Database.dataSource).use {
+        sessionOf(dataSource.ds).use {
             assertEquals(true, it.run(queryOf(
                 """
                 SELECT EXISTS (
@@ -299,7 +309,14 @@ class E2ETest {
     }
 
     private fun foredlerTestApp(testblokk: suspend TestContext.() -> Unit) {
+        val randomPort = ServerSocket(0).localPort
         testApplication {
+            environment {
+                connector {
+                    this.host = "localhost"
+                    this.port = randomPort
+                }
+            }
             application {
                 authentication {
                     provider {
@@ -310,20 +327,26 @@ class E2ETest {
                         }
                     }
                 }
-                lagApplikasjonsmodul(Database.hikariConfig, objectMapper, pølsetjeneste)
+                val migrateConfig = HikariConfig()
+                (dataSource.ds.hikariConfigMXBean as HikariConfig).copyStateTo(migrateConfig)
+                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste)
             }
             startApplication()
 
+            val client = createClient {
+                defaultRequest {
+                    port = randomPort
+                }
+                install(ContentNegotiation) {
+                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
+                }
+            }
             do {
                 val response = client.get("/isready")
                 println("Venter på at isready svarer OK…:${response.status}")
             } while (!response.status.isSuccess())
 
-            testblokk(TestContext(createClient {
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }))
+            testblokk(TestContext(client))
         }
     }
 }
