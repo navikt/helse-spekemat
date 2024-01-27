@@ -72,6 +72,17 @@ class E2ETest {
     }
 
     @Test
+    fun `ugyldig json`() = foredlerTestApp {
+        val response = client.post("/api/pølse") {
+            contentType(ContentType.Application.Json)
+            setBody("""dette er absolutt ikke json""")
+        }
+        val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(feilmelding.feilmelding.contains("Ugyldig request"))
+    }
+
+    @Test
     fun `ett vedtak`() = foredlerTestApp {
         val hendelseId = UUID.randomUUID()
         val kildeId = UUID.randomUUID()
