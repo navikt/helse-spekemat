@@ -34,28 +34,36 @@ subprojects {
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
-    tasks {
-        withType<Jar> {
-            archiveBaseName.set("app")
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
 
-            doFirst {
-                manifest {
-                    val runtimeClasspath by configurations
-                    attributes["Main-Class"] = "no.nav.helse.spekemat.${project.name}.AppKt"
-                    attributes["Class-Path"] = runtimeClasspath.joinToString(separator = " ") {
-                        it.name
+    tasks {
+        if (project.name != "fabrikk") {
+            withType<Jar> {
+                archiveBaseName.set("app")
+
+                doFirst {
+                    manifest {
+                        val runtimeClasspath by configurations
+                        attributes["Main-Class"] = "no.nav.helse.spekemat.${project.name}.AppKt"
+                        attributes["Class-Path"] = runtimeClasspath.joinToString(separator = " ") {
+                            it.name
+                        }
                     }
                 }
             }
-        }
 
-        val copyDeps by registering(Sync::class) {
-            val runtimeClasspath by configurations
-            from(runtimeClasspath)
-            into("build/libs")
-        }
-        named("assemble") {
-            dependsOn(copyDeps)
+            val copyDeps by registering(Sync::class) {
+                val runtimeClasspath by configurations
+                from(runtimeClasspath)
+                into("build/libs")
+            }
+            named("assemble") {
+                dependsOn(copyDeps)
+            }
         }
 
         withType<Test> {

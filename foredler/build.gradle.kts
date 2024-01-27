@@ -19,6 +19,8 @@ plugins {
 }
 
 dependencies {
+    api(project(":fabrikk"))
+
     api("ch.qos.logback:logback-classic:$logbackClassicVersion")
     api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion")
 

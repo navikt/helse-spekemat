@@ -1,3 +1,3 @@
 rootProject.name = "pølsefabrikk"
-include("foredler", "slakter")
+include("foredler", "fabrikk", "slakter")
 

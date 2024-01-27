@@ -1,4 +1,4 @@
-package no.nav.helse.spekemat.foredler
+package no.nav.helse.spekemat.fabrikk
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
