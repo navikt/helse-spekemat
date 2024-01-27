@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
-import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse
-import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse
-import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse
-import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand
-import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand.*
+import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse
+import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse
+import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse
+import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand
+import no.nav.helse.spekemat.foredler.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse.SpleisPeriodetilstand.*
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient
@@ -50,11 +50,11 @@ class SpleisClient(
 
     private fun parsePølsefabrikker(body: String): List<YrkesaktivitetDto> {
         val response = try {
-            objectMapper.readValue<SpleisResponse>(body)
+            objectMapper.readValue<SpleisPersonResponse>(body)
         } catch (err: Exception) {
             throw SpleisClientException("Feil ved tolkning av responsen fra Spleis", err)
         }
-        return response.data.person.arbeidsgivere.map { arbeidsgiver ->
+        return response.arbeidsgivere.map { arbeidsgiver ->
             parseYrkesaktivitet(arbeidsgiver)
         }
     }
@@ -107,46 +107,39 @@ class SpleisClient(
 
 class SpleisClientException(override val message: String, override val cause: Throwable? = null) : RuntimeException()
 
-data class SpleisResponse(
-    val data: SpleisDataResponse
+data class SpleisPersonResponse(
+    val arbeidsgivere: List<SpleisArbeidsgiverResponse>
 ) {
-    data class SpleisDataResponse(
-        val person: SpleisPersonResponse
-    )
-    data class SpleisPersonResponse(
-        val arbeidsgivere: List<SpleisArbeidsgiverResponse>
+    data class SpleisArbeidsgiverResponse(
+        val organisasjonsnummer: String,
+        val generasjoner: List<SpleisGenerasjonerResponse>
     ) {
-        data class SpleisArbeidsgiverResponse(
-            val organisasjonsnummer: String,
-            val generasjoner: List<SpleisGenerasjonerResponse>
+        data class SpleisGenerasjonerResponse(
+            val kildeTilGenerasjon: UUID,
+            val perioder: List<SpleisPeriodeResponse>
         ) {
-            data class SpleisGenerasjonerResponse(
-                val kildeTilGenerasjon: UUID,
-                val perioder: List<SpleisPeriodeResponse>
+            data class SpleisPeriodeResponse(
+                val vedtaksperiodeId: UUID,
+                val generasjonId: UUID,
+                val kilde: UUID,
+                val periodetilstand: SpleisPeriodetilstand
             ) {
-                data class SpleisPeriodeResponse(
-                    val vedtaksperiodeId: UUID,
-                    val generasjonId: UUID,
-                    val kilde: UUID,
-                    val periodetilstand: SpleisPeriodetilstand
-                ) {
-                    enum class SpleisPeriodetilstand {
-                        TilUtbetaling,
-                        TilAnnullering,
-                        Utbetalt,
-                        Annullert,
-                        AnnulleringFeilet,
-                        IngenUtbetaling,
-                        RevurderingFeilet,
-                        TilInfotrygd,
-                        UtbetalingFeilet,
-                        ForberederGodkjenning,
-                        ManglerInformasjon,
-                        VenterPaAnnenPeriode,
-                        UtbetaltVenterPaAnnenPeriode,
-                        TilSkjonnsfastsettelse,
-                        TilGodkjenning
-                    }
+                enum class SpleisPeriodetilstand {
+                    TilUtbetaling,
+                    TilAnnullering,
+                    Utbetalt,
+                    Annullert,
+                    AnnulleringFeilet,
+                    IngenUtbetaling,
+                    RevurderingFeilet,
+                    TilInfotrygd,
+                    UtbetalingFeilet,
+                    ForberederGodkjenning,
+                    ManglerInformasjon,
+                    VenterPaAnnenPeriode,
+                    UtbetaltVenterPaAnnenPeriode,
+                    TilSkjonnsfastsettelse,
+                    TilGodkjenning
                 }
             }
         }

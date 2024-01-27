@@ -58,7 +58,7 @@ class E2ETest {
     @BeforeEach
     fun setup() {
         mockSpleisResponse(listOf(
-            SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse(
+            SpleisPersonResponse.SpleisArbeidsgiverResponse(
                 organisasjonsnummer = A1,
                 generasjoner = emptyList()
             )
@@ -208,8 +208,8 @@ class E2ETest {
     @Test
     fun `migrerer person fra spleis`() = foredlerTestApp {
         val testfil = this::class.java.classLoader.getResourceAsStream("spleispersoner/normal_muffins.json") ?: fail { "Klarte ikke å lese filen" }
-        val normalMuffins = objectMapper.readValue<SpleisResponse>(testfil)
-        mockSpleisResponse(normalMuffins.data.person.arbeidsgivere)
+        val normalMuffins = objectMapper.readValue<SpleisPersonResponse>(testfil)
+        mockSpleisResponse(normalMuffins.arbeidsgivere)
 
         val v3 = UUID.fromString("82c4aa22-280b-4679-a702-379e43cf0f2d")
         val g3 = UUID.fromString("9458f7f3-d23c-48c0-a1f7-ab0ff0322d17")
@@ -289,13 +289,9 @@ class E2ETest {
         }
     }
 
-    private fun mockSpleisResponse(arbeidsgivere: List<SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse>) {
-        val responseBody = objectMapper.writeValueAsString(SpleisResponse(
-            data = SpleisResponse.SpleisDataResponse(
-                person = SpleisResponse.SpleisPersonResponse(
-                    arbeidsgivere = arbeidsgivere
-                )
-            )
+    private fun mockSpleisResponse(arbeidsgivere: List<SpleisPersonResponse.SpleisArbeidsgiverResponse>) {
+        val responseBody = objectMapper.writeValueAsString(SpleisPersonResponse(
+            arbeidsgivere = arbeidsgivere
         ))
         every {
             mockHttpClient.send<String>(any(), any())
