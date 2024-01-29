@@ -7,6 +7,9 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.helse.spekemat.fabrikk.PølseDto
+import no.nav.helse.spekemat.fabrikk.PølseradDto
+import no.nav.helse.spekemat.fabrikk.Pølsestatus
 import java.util.UUID
 
 fun Route.api(pølsetjeneste: Pølsetjeneste) {

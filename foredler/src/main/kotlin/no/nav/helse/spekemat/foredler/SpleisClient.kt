@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
+import no.nav.helse.spekemat.fabrikk.PølseDto
+import no.nav.helse.spekemat.fabrikk.PølseradDto
+import no.nav.helse.spekemat.fabrikk.Pølsestatus
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse
 import no.nav.helse.spekemat.foredler.SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse.SpleisGenerasjonerResponse.SpleisPeriodeResponse

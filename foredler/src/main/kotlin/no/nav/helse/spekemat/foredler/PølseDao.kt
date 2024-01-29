@@ -6,6 +6,8 @@ import kotliquery.TransactionalSession
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import net.logstash.logback.argument.StructuredArguments.kv
+import no.nav.helse.spekemat.fabrikk.Pølsefabrikk
+import no.nav.helse.spekemat.fabrikk.PølseradDto
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -103,7 +105,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         val rader: List<PølseradDto>
     )
     private companion object {
-        private val logg = LoggerFactory.getLogger(Pølse::class.java)
+        private val logg = LoggerFactory.getLogger(this::class.java)
         private val objectMapper = jacksonObjectMapper()
 
         @Language("PostgreSQL")

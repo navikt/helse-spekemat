@@ -29,7 +29,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotliquery.queryOf
 import kotliquery.sessionOf
-import no.nav.helse.spekemat.foredler.Pølsestatus.*
+import no.nav.helse.spekemat.fabrikk.Pølsestatus.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
