@@ -116,6 +116,26 @@ class PølsefabrikkTest : PølseTest() {
     }
 
     @Test
+    fun `revurdering av pølse etter forkasting`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = 20.januar til 21.januar
+        val p1Revurdering = p1.nyGenerasjon()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.pølseForkastet(p2)
+
+        fabrikk.nyPølse(p1Revurdering)
+
+        fabrikk.pakke().also { result ->
+            assertEquals(2, result.size)
+            assertEquals(setOf(p1Revurdering, p2.forkastet()), result[0])
+            assertEquals(setOf(p1.lukket(), p2.forkastet()), result[1])
+        }
+    }
+
+    @Test
     fun `to annullerte vedtak med en revurdering i mellom`() {
         val p1 = 1.januar til 5.januar
         val p2 = 20.januar til 21.januar

@@ -12,10 +12,13 @@ data class Pølserad(
         pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) } && !kanGjenbrukeRad()
 
     private fun kanGjenbrukeRad() =
-        allePølserKyttetTilForrigeKildeErForkastet() || allePølserRadenErOpprettetMedErÅpen()
+        radenErOpprettetAvAnnullering() || allePølserRadenErOpprettetMedErÅpen()
 
     private fun erNyVersjonAvPølse(other: Pølse, pølse: Pølse) =
         other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde
+
+    private fun radenErOpprettetAvAnnullering() =
+        allePølserKyttetTilForrigeKildeErForkastet() && allePølserRadenErOpprettetMedErForkastet()
 
     private fun allePølserKyttetTilForrigeKildeErForkastet() = pølser
         .filter { it.kilde == sisteKildeId }
@@ -24,13 +27,18 @@ data class Pølserad(
         }
         .all { it.status == Pølsestatus.FORKASTET }
 
+    private fun allePølserRadenErOpprettetMedErForkastet() =
+        pølserMedSammeKildeSomRaden().all { it.status == Pølsestatus.FORKASTET }
+
     private fun allePølserRadenErOpprettetMedErÅpen() =
+        pølserMedSammeKildeSomRaden().all { it.status == Pølsestatus.ÅPEN }
+
+    private fun pølserMedSammeKildeSomRaden() =
         pølser
             .filter { it.kilde == kildeTilRad }
             .also {
                 check(it.isNotEmpty()) { "Finner ingen pølser knyttet til kildeID som opprettet raden, dette må være en feil" }
             }
-            .all { it.status == Pølsestatus.ÅPEN }
 
     fun fjernPølserTilBehandling() =
         this.copy(pølser = pølser.filterNot { it.status == Pølsestatus.ÅPEN })
