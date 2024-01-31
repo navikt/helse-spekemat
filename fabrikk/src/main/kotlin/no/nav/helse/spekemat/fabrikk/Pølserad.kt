@@ -19,11 +19,17 @@ data class Pølserad(
 
     private fun allePølserKyttetTilForrigeKildeErForkastet() = pølser
         .filter { it.kilde == sisteKildeId }
+        .also {
+            check(it.isNotEmpty()) { "Finner ingen pølser knyttet til forrige kildeID, dette må være en feil" }
+        }
         .all { it.status == Pølsestatus.FORKASTET }
 
     private fun allePølserRadenErOpprettetMedErÅpen() =
         pølser
             .filter { it.kilde == kildeTilRad }
+            .also {
+                check(it.isNotEmpty()) { "Finner ingen pølser knyttet til kildeID som opprettet raden, dette må være en feil" }
+            }
             .all { it.status == Pølsestatus.ÅPEN }
 
     fun fjernPølserTilBehandling() =
