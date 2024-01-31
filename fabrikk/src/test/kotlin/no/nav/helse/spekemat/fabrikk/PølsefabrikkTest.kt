@@ -59,6 +59,102 @@ class PølsefabrikkTest : PølseTest() {
     }
 
     @Test
+    fun `to annullerte vedtak etter hverandre`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = 20.januar til 31.januar
+        val p1Annullert = p1.nyGenerasjon()
+        val p2Annullert = p2.nyGenerasjon()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.lukketPølse(p2)
+        fabrikk.nyPølse(p2Annullert)
+        fabrikk.pølseForkastet(p2Annullert)
+        fabrikk.nyPølse(p1Annullert)
+        fabrikk.pølseForkastet(p1Annullert)
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size)
+        assertEquals(setOf(p1Annullert.forkastet(), p2Annullert.forkastet()), result[0])
+        assertEquals(setOf(p1.lukket(), p2.lukket()), result[1])
+    }
+
+    @Test
+    fun `to annullerte vedtak med en ny pølse i mellom`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = 20.januar til 21.januar
+        val p3 = 25.januar til 31.januar
+        val p1Annullert = p1.nyGenerasjon()
+        val p2Annullert = p2.nyGenerasjon()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.lukketPølse(p2)
+
+        fabrikk.nyPølse(p2Annullert)
+        fabrikk.pølseForkastet(p2Annullert)
+
+        fabrikk.nyPølse(p3)
+
+        fabrikk.pakke().also { result ->
+            assertEquals(2, result.size)
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet(), p3), result[0])
+            assertEquals(setOf(p1.lukket(), p2.lukket()), result[1])
+        }
+
+        fabrikk.nyPølse(p1Annullert)
+        fabrikk.pølseForkastet(p1Annullert)
+
+        fabrikk.pakke().also { result ->
+            assertEquals(3, result.size)
+            assertEquals(setOf(p1Annullert.forkastet(), p2Annullert.forkastet(), p3), result[0])
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet()), result[1])
+            assertEquals(setOf(p1.lukket(), p2.lukket()), result[2])
+        }
+    }
+
+    @Test
+    fun `to annullerte vedtak med en revurdering i mellom`() {
+        val p1 = 1.januar til 5.januar
+        val p2 = 20.januar til 21.januar
+        val p3 = 25.januar til 31.januar
+
+        val p1Annullert = p1.nyGenerasjon()
+        val p2Annullert = p2.nyGenerasjon()
+        val p3Revurdering = p3.nyGenerasjon()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.lukketPølse(p2)
+        fabrikk.nyPølse(p3)
+        fabrikk.lukketPølse(p3)
+
+        fabrikk.nyPølse(p2Annullert)
+        fabrikk.pølseForkastet(p2Annullert)
+
+        fabrikk.nyPølse(p3Revurdering)
+
+        fabrikk.pakke().also { result ->
+            assertEquals(2, result.size)
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet(), p3Revurdering), result[0])
+            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[1])
+        }
+
+        fabrikk.nyPølse(p1Annullert)
+        fabrikk.pølseForkastet(p1Annullert)
+
+        fabrikk.pakke().also { result ->
+            assertEquals(3, result.size)
+            assertEquals(setOf(p1Annullert.forkastet(), p2Annullert.forkastet(), p3Revurdering), result[0])
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet()), result[1])
+            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[2])
+        }
+    }
+
+    @Test
     fun `to pølser - ett vedtak før forlengelse`() {
         val p1 = 1.januar til 5.januar
         val p2 = 6.januar til 10.januar

@@ -33,7 +33,7 @@ class Pølsefabrikk private constructor(
 
     private fun lagNyRad(pølse: Pølse) {
         if (pakken.isEmpty()) {
-            pakken.add(Pølserad(listOf(pølse), pølse.kilde))
+            pakken.add(Pølserad(pølse))
             return
         }
 
