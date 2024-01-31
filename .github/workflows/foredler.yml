@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'foredler/**'
+      - 'fabrikk/**'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - '.github/workflows/foredler.yml'
