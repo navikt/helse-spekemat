@@ -9,14 +9,22 @@ data class Pølserad(
 ) {
     constructor(pølse: Pølse) : this(listOf(pølse), pølse.kilde, pølse.kilde)
     fun skalLageNyRad(other: Pølse) =
-        pølser.any { pølse -> erNyPølseMedNyKilde(other, pølse) && ikkeAllePølserFraForrigeKildeErForkastet() }
+        pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) } && !kanGjenbrukeRad()
 
-    private fun erNyPølseMedNyKilde(other: Pølse, pølse: Pølse) =
+    private fun kanGjenbrukeRad() =
+        allePølserKyttetTilForrigeKildeErForkastet() || allePølserRadenErOpprettetMedErÅpen()
+
+    private fun erNyVersjonAvPølse(other: Pølse, pølse: Pølse) =
         other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde
 
-    private fun ikkeAllePølserFraForrigeKildeErForkastet() = pølser
+    private fun allePølserKyttetTilForrigeKildeErForkastet() = pølser
         .filter { it.kilde == sisteKildeId }
-        .any { it.status != Pølsestatus.FORKASTET }
+        .all { it.status == Pølsestatus.FORKASTET }
+
+    private fun allePølserRadenErOpprettetMedErÅpen() =
+        pølser
+            .filter { it.kilde == kildeTilRad }
+            .all { it.status == Pølsestatus.ÅPEN }
 
     fun fjernPølserTilBehandling() =
         this.copy(pølser = pølser.filterNot { it.status == Pølsestatus.ÅPEN })

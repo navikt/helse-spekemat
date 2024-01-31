@@ -230,6 +230,54 @@ class PølsefabrikkTest : PølseTest() {
     }
 
     @Test
+    fun `lager ikke flere rader dersom pølsen raden er opprettet med fortsatt er åpen`() {
+        val v1 = UUID.randomUUID()
+        val v2 = UUID.randomUUID()
+
+        val p1 = 1.januar til 5.januar som v1
+        val p2 = 6.januar til 10.januar som v2
+        val p2Revurdering = p2.nyGenerasjon(kilde = UUID.randomUUID())
+        val p1Revurdering = p1.nyGenerasjon(kilde = UUID.randomUUID())
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.lukketPølse(p1)
+        fabrikk.lukketPølse(p2)
+        fabrikk.nyPølse(p2Revurdering)
+        fabrikk.nyPølse(p1Revurdering)
+
+        val result = fabrikk.pakke()
+        assertEquals(2, result.size) // forventer to rader
+        assertEquals(setOf(p2Revurdering, p1Revurdering), result[0]) // rekkefølgen på rad 1
+        assertEquals(setOf(p2.lukket(), p1.lukket()), result[1]) // rekkefølgen på rad 2 er uvesentlig:
+    }
+
+    @Test
+    fun `lager flere rader dersom pølsen raden er opprettet med er lukket`() {
+        val v1 = UUID.randomUUID()
+        val v2 = UUID.randomUUID()
+
+        val p1 = 1.januar til 5.januar som v1
+        val p2 = 6.januar til 10.januar som v2
+        val p2Revurdering = p2.nyGenerasjon(kilde = UUID.randomUUID())
+        val p1Revurdering = p1.nyGenerasjon(kilde = UUID.randomUUID())
+
+        fabrikk.nyPølse(p1)
+        fabrikk.nyPølse(p2)
+        fabrikk.lukketPølse(p1)
+        fabrikk.lukketPølse(p2)
+        fabrikk.nyPølse(p2Revurdering)
+        fabrikk.lukketPølse(p2Revurdering)
+        fabrikk.nyPølse(p1Revurdering)
+
+        val result = fabrikk.pakke()
+        assertEquals(3, result.size) // forventer to rader
+        assertEquals(setOf(p2Revurdering.lukket(), p1Revurdering), result[0])
+        assertEquals(setOf(p2Revurdering.lukket(), p1.lukket()), result[1])
+        assertEquals(setOf(p2.lukket(), p1.lukket()), result[2])
+    }
+
+    @Test
     fun `out of order`() {
         val v1 = UUID.randomUUID()
         val v2 = UUID.randomUUID()
