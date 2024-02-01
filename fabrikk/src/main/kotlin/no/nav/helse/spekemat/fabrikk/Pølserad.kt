@@ -8,37 +8,10 @@ data class Pølserad(
     val sisteKildeId: UUID
 ) {
     constructor(pølse: Pølse) : this(listOf(pølse), pølse.kilde, pølse.kilde)
-    fun skalLageNyRad(other: Pølse) =
-        pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) } && !kanGjenbrukeRad()
-
-    private fun kanGjenbrukeRad() =
-        radenErOpprettetAvAnnullering() || allePølserRadenErOpprettetMedErÅpen()
+    fun skalLageNyRad(other: Pølse) = pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) }
 
     private fun erNyVersjonAvPølse(other: Pølse, pølse: Pølse) =
         other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde
-
-    private fun radenErOpprettetAvAnnullering() =
-        allePølserKyttetTilForrigeKildeErForkastet() && allePølserRadenErOpprettetMedErForkastet()
-
-    private fun allePølserKyttetTilForrigeKildeErForkastet() = pølser
-        .filter { it.kilde == sisteKildeId }
-        .also {
-            check(it.isNotEmpty()) { "Finner ingen pølser knyttet til forrige kildeID, dette må være en feil" }
-        }
-        .all { it.status == Pølsestatus.FORKASTET }
-
-    private fun allePølserRadenErOpprettetMedErForkastet() =
-        pølserMedSammeKildeSomRaden().all { it.status == Pølsestatus.FORKASTET }
-
-    private fun allePølserRadenErOpprettetMedErÅpen() =
-        pølserMedSammeKildeSomRaden().all { it.status == Pølsestatus.ÅPEN }
-
-    private fun pølserMedSammeKildeSomRaden() =
-        pølser
-            .filter { it.kilde == kildeTilRad }
-            .also {
-                check(it.isNotEmpty()) { "Finner ingen pølser knyttet til kildeID som opprettet raden, dette må være en feil" }
-            }
 
     fun fjernPølserTilBehandling() =
         this.copy(pølser = pølser.filterNot { it.status == Pølsestatus.ÅPEN })

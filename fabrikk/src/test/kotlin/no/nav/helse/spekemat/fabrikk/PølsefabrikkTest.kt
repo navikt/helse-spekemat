@@ -75,9 +75,10 @@ class PølsefabrikkTest : PølseTest() {
         fabrikk.pølseForkastet(p1Annullert)
 
         val result = fabrikk.pakke()
-        assertEquals(2, result.size)
+        assertEquals(3, result.size)
         assertEquals(setOf(p1Annullert.forkastet(), p2Annullert.forkastet()), result[0])
-        assertEquals(setOf(p1.lukket(), p2.lukket()), result[1])
+        assertEquals(setOf(p1.lukket(), p2Annullert.forkastet()), result[1])
+        assertEquals(setOf(p1.lukket(), p2.lukket()), result[2])
     }
 
     @Test
@@ -158,19 +159,21 @@ class PølsefabrikkTest : PølseTest() {
         fabrikk.nyPølse(p3Revurdering)
 
         fabrikk.pakke().also { result ->
-            assertEquals(2, result.size)
+            assertEquals(3, result.size)
             assertEquals(setOf(p1.lukket(), p2Annullert.forkastet(), p3Revurdering), result[0])
-            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[1])
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet(), p3.lukket()), result[1])
+            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[2])
         }
 
         fabrikk.nyPølse(p1Annullert)
         fabrikk.pølseForkastet(p1Annullert)
 
         fabrikk.pakke().also { result ->
-            assertEquals(3, result.size)
+            assertEquals(4, result.size)
             assertEquals(setOf(p1Annullert.forkastet(), p2Annullert.forkastet(), p3Revurdering), result[0])
             assertEquals(setOf(p1.lukket(), p2Annullert.forkastet()), result[1])
-            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[2])
+            assertEquals(setOf(p1.lukket(), p2Annullert.forkastet(), p3.lukket()), result[2])
+            assertEquals(setOf(p1.lukket(), p2.lukket(), p3.lukket()), result[3])
         }
     }
 
@@ -250,7 +253,7 @@ class PølsefabrikkTest : PølseTest() {
     }
 
     @Test
-    fun `lager ikke flere rader dersom pølsen raden er opprettet med fortsatt er åpen`() {
+    fun `lager flere rader dersom pølsen raden er opprettet med fortsatt er åpen`() {
         val v1 = UUID.randomUUID()
         val v2 = UUID.randomUUID()
 
@@ -267,9 +270,10 @@ class PølsefabrikkTest : PølseTest() {
         fabrikk.nyPølse(p1Revurdering)
 
         val result = fabrikk.pakke()
-        assertEquals(2, result.size) // forventer to rader
-        assertEquals(setOf(p2Revurdering, p1Revurdering), result[0]) // rekkefølgen på rad 1
-        assertEquals(setOf(p2.lukket(), p1.lukket()), result[1]) // rekkefølgen på rad 2 er uvesentlig:
+        assertEquals(3, result.size)
+        assertEquals(setOf(p2Revurdering, p1Revurdering), result[0])
+        assertEquals(setOf(p1.lukket()), result[1])
+        assertEquals(setOf(p2.lukket(), p1.lukket()), result[2])
     }
 
     @Test
