@@ -72,14 +72,15 @@ class Pølsetjenesten(
     private fun sjekkOKResponse(request: HttpRequest) {
         val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
         sjekkOKResponse(response)
-        val callId = response.headers().firstValue(CALL_ID_HEADER).getOrNull() ?: "N/A"
+        val callId = response.callId
         sikkerlogg.info("mottok {}:\n${response.body()}", kv("callId", callId))
     }
 
     private fun sjekkOKResponse(response: HttpResponse<String>) {
         if (response.statusCode() == 200) return
-        sikkerlogg.error("Forventet HTTP 200. Fikk {}\nResponse:\n{}", response.statusCode(), response.body())
-        throw RuntimeException("Forventet HTTP 200. Fikk ${response.statusCode()}")
+        val callId = response.callId
+        sikkerlogg.error("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", response.statusCode(), kv("callId", callId), response.body())
+        throw RuntimeException("Forventet HTTP 200 for callId=${callId}. Fikk ${response.statusCode()}")
     }
 
     private fun lagPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
@@ -118,6 +119,8 @@ class Pølsetjenesten(
             .method(method, BodyPublishers.ofString(body))
             .build()
     }
+
+    private val HttpResponse<*>.callId get() = headers().firstValue(CALL_ID_HEADER).getOrNull() ?: "N/A"
 
     private data class PølseRequest(
         val fnr: String,
