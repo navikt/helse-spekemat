@@ -16,7 +16,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
 
     post("/api/slett") {
         val request = call.receiveNullable<SlettRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request"
+            feilmelding = "Ugyldig request",
+            callId = call.callId
         ))
         pølsetjeneste.slett(request.fnr)
         call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
@@ -24,7 +25,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
 
     post("/api/pølse") {
         val request = call.receiveNullable<NyPølseRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request"
+            feilmelding = "Ugyldig request",
+            callId = call.callId
         ))
         val pølse = PølseDto(
             vedtaksperiodeId = request.pølse.vedtaksperiodeId,
@@ -46,7 +48,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
 
     patch("/api/pølse") {
         val request = call.receiveNullable<OppdaterPølseRequest>() ?: return@patch call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request"
+            feilmelding = "Ugyldig request",
+            callId = call.callId
         ))
         val status = when (request.status) {
             PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
@@ -69,7 +72,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
 
     post("/api/pølser") {
         val request = call.receiveNullable<PølserRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request"
+            feilmelding = "Ugyldig request",
+            callId = call.callId
         ))
         call.respond(HttpStatusCode.OK, PølserResponse(pølsetjeneste.hent(request.fnr)))
     }

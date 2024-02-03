@@ -122,12 +122,14 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
     install(StatusPages) {
         exception<BadRequestException> { call, cause ->
             call.respond(HttpStatusCode.BadRequest, FeilResponse(
-                feilmelding = "Ugyldig request: ${cause.message}\n${cause.stackTraceToString()}"
+                feilmelding = "Ugyldig request: ${cause.message}\n${cause.stackTraceToString()}",
+                callId = call.callId
             ))
         }
         exception<Throwable> { call, cause ->
             call.respond(HttpStatusCode.InternalServerError, FeilResponse(
-                feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}"
+                feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}",
+                callId = call.callId
             ))
         }
     }
@@ -162,7 +164,10 @@ private fun migrate(config: HikariConfig) {
     }
 }
 
-data class FeilResponse(val feilmelding: String)
+data class FeilResponse(
+    val feilmelding: String,
+    val callId: String?
+)
 
 private const val isaliveEndpoint = "/isalive"
 private const val isreadyEndpoint = "/isready"
