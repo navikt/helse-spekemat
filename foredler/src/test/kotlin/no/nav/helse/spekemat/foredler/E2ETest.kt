@@ -91,6 +91,23 @@ class E2ETest {
     }
 
     @Test
+    fun `oppdatering på tom fabrikk`() = foredlerTestApp {
+        sendOppdaterPølseRequest(FNR, A1, UUID.randomUUID(), UUID.randomUUID(), PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.NotFound).also { response ->
+            val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
+            assertTrue(feilmelding.feilmelding.contains("Ingen registrert pølsepakke for vedkommende"))
+        }
+    }
+
+    @Test
+    fun `oppdatering på pølse som ikke finnes`() = foredlerTestApp {
+        sendNyPølseRequest(FNR, A1)
+        sendOppdaterPølseRequest(FNR, A1, UUID.randomUUID(), UUID.randomUUID(), PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.NotFound).also { response ->
+            val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
+            assertTrue(feilmelding.feilmelding.contains("Ingen pølse registrert"))
+        }
+    }
+
+    @Test
     fun `ett vedtak`() = foredlerTestApp {
         val hendelseId = UUID.randomUUID()
         val kildeId = UUID.randomUUID()
@@ -387,7 +404,8 @@ private class TestContext(
         vedtaksperiodeId: UUID,
         generasjonId: UUID,
         status: PølsestatusDto,
-        hendelseId: UUID = UUID.randomUUID()
+        hendelseId: UUID = UUID.randomUUID(),
+        forventetStatusCode: HttpStatusCode = HttpStatusCode.OK
     ): HttpResponse {
         return client.patch("/api/pølse") {
             contentType(ContentType.Application.Json)
@@ -401,7 +419,7 @@ private class TestContext(
                 hendelsedata = "{}"
             ))
         }.also {
-            assertTrue(it.status.isSuccess())
+            assertEquals(forventetStatusCode, it.status)
         }
     }
 

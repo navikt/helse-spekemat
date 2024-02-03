@@ -2,9 +2,25 @@ package no.nav.helse.spekemat.fabrikk
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 class PølsefabrikkTest : PølseTest() {
+
+    @Test
+    fun `oppdatering på tom fabrikk`() {
+        assertThrows<TomPølsepakkeException> {
+            fabrikk.pølseForkastet(10.januar til 12.januar)
+        }
+    }
+
+    @Test
+    fun `oppdatering på pølse som ikke finnes`() {
+        fabrikk.nyPølse(1.januar til 5.januar)
+        assertThrows<PølseFinnesIkkeException> {
+            fabrikk.pølseForkastet(10.januar til 12.januar)
+        }
+    }
 
     @Test
     fun `en ny pølse`() {

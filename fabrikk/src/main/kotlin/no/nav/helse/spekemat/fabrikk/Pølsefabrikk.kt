@@ -24,8 +24,9 @@ class Pølsefabrikk private constructor(
         }
 
     fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): PølseDto {
+        if (pakken.isEmpty()) throw TomPølsepakkeException("Pølsepakken er tom")
         pakken[0] = pakken[0].oppdaterPølse(vedtaksperiodeId, generasjonId, status)
-        return pakken[0].pølser.single { it.vedtaksperiodeId == vedtaksperiodeId }.dto()
+        return pakken[0].pølser.singleOrNull { it.vedtaksperiodeId == vedtaksperiodeId }?.dto() ?: throw PølseFinnesIkkeException("Ingen pølse registrert for vedtaksperiodeId=$vedtaksperiodeId og generasjon=$generasjonId")
     }
 
     private fun skalLageNyrad(pølse: Pølse) =
@@ -43,3 +44,6 @@ class Pølsefabrikk private constructor(
     }
     fun pakke() = pakken.map { it.dto() }
 }
+
+class TomPølsepakkeException(override val message: String?) : IllegalStateException()
+class PølseFinnesIkkeException(override val message: String?) : IllegalStateException()

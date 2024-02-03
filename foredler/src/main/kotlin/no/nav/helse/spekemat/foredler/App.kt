@@ -126,6 +126,12 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
                 callId = call.callId
             ))
         }
+        exception<NotFoundException> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, FeilResponse(
+                feilmelding = "Ikke funnet: ${cause.message}\n${cause.stackTraceToString()}",
+                callId = call.callId
+            ))
+        }
         exception<Throwable> { call, cause ->
             call.respond(HttpStatusCode.InternalServerError, FeilResponse(
                 feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}",

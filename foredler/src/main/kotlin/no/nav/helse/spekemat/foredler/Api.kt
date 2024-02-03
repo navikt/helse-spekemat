@@ -7,9 +7,7 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.helse.spekemat.fabrikk.PølseDto
-import no.nav.helse.spekemat.fabrikk.PølseradDto
-import no.nav.helse.spekemat.fabrikk.Pølsestatus
+import no.nav.helse.spekemat.fabrikk.*
 import java.util.UUID
 
 fun Route.api(pølsetjeneste: Pølsetjeneste) {
@@ -57,17 +55,23 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
         }
         val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
-        pølsetjeneste.oppdaterPølse(
-            request.fnr,
-            request.yrkesaktivitetidentifikator,
-            request.vedtaksperiodeId,
-            request.generasjonId,
-            status,
-            request.meldingsreferanseId,
-            request.hendelsedata,
-            callId
-        )
-        call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+        try {
+            pølsetjeneste.oppdaterPølse(
+                request.fnr,
+                request.yrkesaktivitetidentifikator,
+                request.vedtaksperiodeId,
+                request.generasjonId,
+                status,
+                request.meldingsreferanseId,
+                request.hendelsedata,
+                callId
+            )
+            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+        } catch (err: TomPølsepakkeException) {
+            throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
+        } catch (err: PølseFinnesIkkeException) {
+            throw NotFoundException("Pølse finnes ikke: ${err.message}")
+        }
     }
 
     post("/api/pølser") {
