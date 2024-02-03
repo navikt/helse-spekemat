@@ -42,7 +42,9 @@ internal class GenerasjonLukketRiver(
         logg.info("Håndterer generasjon_lukket {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
         sikkerlogg.info("Håndterer generasjon_lukket {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
 
-        pølsetjeneste.generasjonLukket(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, meldingsreferanseId, packet.toJson())
+        feilhåndtering(logg, sikkerlogg) {
+            pølsetjeneste.generasjonLukket(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, meldingsreferanseId, packet.toJson())
+        }
     }
 
     private fun JsonNode.asUUID() = UUID.fromString(asText())

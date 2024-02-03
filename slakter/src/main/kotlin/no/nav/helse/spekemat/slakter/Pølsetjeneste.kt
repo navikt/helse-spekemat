@@ -2,6 +2,7 @@ package no.nav.helse.spekemat.slakter
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.slakter.PølsestatusDto.*
@@ -79,8 +80,21 @@ class Pølsetjenesten(
     private fun sjekkOKResponse(response: HttpResponse<String>) {
         if (response.statusCode() == 200) return
         val callId = response.callId
-        sikkerlogg.error("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", response.statusCode(), kv("callId", callId), response.body())
-        throw RuntimeException("Forventet HTTP 200 for callId=${callId}. Fikk ${response.statusCode()}")
+        reagerPåFeilkode(response.statusCode(), callId, response.body())
+    }
+
+    private fun reagerPåFeilkode(statusCode: Int, callId: String, responseBody: String) {
+        sikkerlogg.error("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", statusCode, kv("callId", callId), responseBody)
+        when (statusCode) {
+            404 -> throw IkkeFunnetException("Vedtaksperioden eller personen finnes ikke", callId, parseResponseSomFeilmelding(responseBody))
+            else -> throw RuntimeException("Forventet HTTP 200 for callId=${callId}. Fikk $statusCode")
+        }
+    }
+
+    private fun parseResponseSomFeilmelding(responseBody: String) = try {
+        objectMapper.readValue<FeilmeldingResponse>(responseBody)
+    } catch (err: Exception) {
+        null
     }
 
     private fun lagPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
@@ -140,6 +154,9 @@ class Pølsetjenesten(
         val hendelsedata: String
     )
 }
+
+data class FeilmeldingResponse(val feilmelding: String)
+class IkkeFunnetException(override val message: String?, val callId: String, val feilmeldingResponse: FeilmeldingResponse?) : RuntimeException()
 
 enum class PølsestatusDto { LUKKET, FORKASTET }
 

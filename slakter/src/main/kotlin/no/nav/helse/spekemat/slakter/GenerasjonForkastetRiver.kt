@@ -42,7 +42,9 @@ internal class GenerasjonForkastetRiver(
         logg.info("Håndterer generasjon_forkastet {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
         sikkerlogg.info("Håndterer generasjon_forkastet {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
 
-        pølsetjeneste.generasjonForkastet(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, meldingsreferanseId, packet.toJson())
+        feilhåndtering(logg, sikkerlogg) {
+            pølsetjeneste.generasjonForkastet(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, meldingsreferanseId, packet.toJson())
+        }
     }
 
     private fun JsonNode.asUUID() = UUID.fromString(asText())
