@@ -94,6 +94,7 @@ class Pølsetjenesten(
     private fun parseResponseSomFeilmelding(responseBody: String) = try {
         objectMapper.readValue<FeilmeldingResponse>(responseBody)
     } catch (err: Exception) {
+        sikkerlogg.info("klarte ikke tolke respons som json: ${err.message}", err)
         null
     }
 
