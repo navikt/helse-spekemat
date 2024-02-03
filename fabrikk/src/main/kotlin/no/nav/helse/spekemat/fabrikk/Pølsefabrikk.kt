@@ -15,7 +15,7 @@ class Pølsefabrikk private constructor(
     fun nyPølse(pølse: Pølse) {
         if (håndtertFør(pølse)) return
         if (skalLageNyrad(pølse)) return lagNyRad(pølse)
-        pakken[0] = pakken[0].nyPølse(pølse)
+        pakken[0] = pakken[0].leggTilNyPølse(pølse)
     }
 
     private fun håndtertFør(pølse: Pølse) =
@@ -34,7 +34,7 @@ class Pølsefabrikk private constructor(
 
     private fun lagNyRad(pølse: Pølse) {
         if (pakken.isEmpty()) {
-            pakken.add(Pølserad(pølse))
+            pakken.add(pølse.nyRad())
             return
         }
 

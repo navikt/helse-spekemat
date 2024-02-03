@@ -3,41 +3,34 @@ package no.nav.helse.spekemat.fabrikk
 import java.util.*
 
 data class Pølserad(
-    val pølser: List<Pølse>,
+    val pølser: Set<Pølse>,
     val kildeTilRad: UUID
 ) {
-    constructor(pølse: Pølse) : this(listOf(pølse), pølse.kilde)
-    fun skalLageNyRad(other: Pølse) = pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) }
-
-    private fun erNyVersjonAvPølse(other: Pølse, pølse: Pølse) =
-        other.erNyPølseAv(pølse) && this.kildeTilRad != other.kilde
+    fun skalLageNyRad(other: Pølse): Boolean {
+        if (other.erOpprettetFraSammeKilde(kildeTilRad)) return false
+        return pølser.any { pølse -> other.erNyPølseAv(pølse) }
+    }
 
     fun fjernPølserTilBehandling() =
-        this.copy(pølser = pølser.filterNot { it.status == Pølsestatus.ÅPEN })
+        this.copy(pølser = pølser.filterNot { it.erÅpen() }.toSet())
 
     fun nyPølserad(pølse: Pølse): Pølserad {
-        return this
-            .nyPølse(pølse)
-            .copy(kildeTilRad = pølse.kilde)
+        return pølse.nyRadFra(this)
     }
-    fun nyPølse(pølse: Pølse): Pølserad {
-        return this.copy(
-            pølser = pølser
-                .filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId }
-                .plusElement(pølse)
-        )
+    fun leggTilNyPølse(pølse: Pølse): Pølserad {
+        return this.copy(pølser = setOf(pølse) + pølser)
     }
 
     fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): Pølserad {
         return this.copy(
-            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, status) }
+            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, status) }.toSet()
         )
     }
     fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)
 
     companion object {
         fun fraDto(dto: PølseradDto) = Pølserad(
-            pølser = dto.pølser.map { Pølse.fraDto(it) },
+            pølser = dto.pølser.map { Pølse.fraDto(it) }.toSet(),
             kildeTilRad = dto.kildeTilRad
         )
     }

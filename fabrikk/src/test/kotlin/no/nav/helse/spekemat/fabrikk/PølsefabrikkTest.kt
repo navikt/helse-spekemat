@@ -1,11 +1,26 @@
 package no.nav.helse.spekemat.fabrikk
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 class PølsefabrikkTest : PølseTest() {
+
+    @Test
+    fun pølsesett() {
+        val p1 = 1.januar til 2.januar
+        val p2 = p1.som(vedtaksperiodeId = UUID.randomUUID())
+        val p3 = p1.nyGenerasjon()
+        assertEquals(setOf(p1), setOf(p1, p1))
+        assertEquals(setOf(p1, p2), setOf(p1, p2))
+        assertEquals(setOf(p1), setOf(p1, p3))
+        assertNotEquals(p1, p2)
+        assertEquals(p1, p3)
+        assertEquals(p1.hashCode(), p3.hashCode())
+        assertNotEquals(p1.hashCode(), p2.hashCode())
+    }
 
     @Test
     fun `oppdatering på tom fabrikk`() {

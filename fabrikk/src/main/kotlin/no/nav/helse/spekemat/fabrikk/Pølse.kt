@@ -6,14 +6,24 @@ data class Pølse(
     val vedtaksperiodeId: UUID,
     val generasjonId: UUID,
     // hvorvidt generasjonen er åpen for endringer (dvs. til behandling) eller ikke (vedtak fattet / generasjon avsluttet)
-    val status: Pølsestatus,
+    private val status: Pølsestatus,
     // tingen som gjorde at generasjonen ble opprettet
-    val kilde: UUID
+    private val kilde: UUID
 ) {
+    fun erOpprettetFraSammeKilde(otherKilde: UUID) = this.kilde == otherKilde
     fun erNyPølseAv(other: Pølse): Boolean {
         // må være samme vedtaksperiode
         return this.vedtaksperiodeId == other.vedtaksperiodeId
     }
+    fun nyRad() = Pølserad(setOf(this), this.kilde)
+    fun nyRadFra(pølserad: Pølserad): Pølserad {
+        return pølserad
+            .leggTilNyPølse(this)
+            .copy(kildeTilRad = this.kilde)
+    }
+
+    fun erÅpen() = status == Pølsestatus.ÅPEN
+
     fun dto() = PølseDto(
         vedtaksperiodeId = vedtaksperiodeId,
         generasjonId = generasjonId,
@@ -28,6 +38,10 @@ data class Pølse(
         }
         return this.copy(status = status)
     }
+
+    override fun hashCode() = vedtaksperiodeId.hashCode()
+    override fun equals(other: Any?) =
+        other === this || (other is Pølse && other.vedtaksperiodeId == this.vedtaksperiodeId)
 
     companion object {
         fun fraDto(dto: PølseDto) = Pølse(
