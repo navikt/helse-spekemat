@@ -33,7 +33,7 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
-import net.logstash.logback.argument.StructuredArguments.keyValue
+import net.logstash.logback.argument.StructuredArguments.*
 import org.flywaydb.core.Flyway
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -179,10 +179,10 @@ private fun Application.requestResponseTracing(logger: Logger) {
                 .map { (key, values) ->
                     keyValue("req_header_$key", values.joinToString(separator = ";"))
                 }.toTypedArray()
-            logger.info("incoming callId=${call.callId} method=${call.request.httpMethod.value} uri=${call.request.uri}", *headers)
+            logger.info("{} {}", v("method", call.request.httpMethod.value), v("uri", call.request.uri), *headers)
             proceed()
         } catch (err: Throwable) {
-            logger.error("exception thrown during processing: ${err.message} callId=${call.callId}")
+            logger.error("ukjent feil: ${err.message}", err)
             throw err
         }
     }
@@ -197,7 +197,7 @@ private fun Application.requestResponseTracing(logger: Logger) {
         }
 
         if (call.request.uri in ignoredPaths) return@intercept
-        logger.info("responding with status=${status.value} callId=${call.callId} ")
+        logger.info("svarer status=${status.value} ${call.request.uri}")
     }
 }
 
