@@ -4,10 +4,9 @@ import java.util.*
 
 data class Pølserad(
     val pølser: List<Pølse>,
-    val kildeTilRad: UUID,
-    val sisteKildeId: UUID
+    val kildeTilRad: UUID
 ) {
-    constructor(pølse: Pølse) : this(listOf(pølse), pølse.kilde, pølse.kilde)
+    constructor(pølse: Pølse) : this(listOf(pølse), pølse.kilde)
     fun skalLageNyRad(other: Pølse) = pølser.any { pølse -> erNyVersjonAvPølse(other, pølse) }
 
     private fun erNyVersjonAvPølse(other: Pølse, pølse: Pølse) =
@@ -19,17 +18,13 @@ data class Pølserad(
     fun nyPølserad(pølse: Pølse): Pølserad {
         return this
             .nyPølse(pølse)
-            .copy(
-                kildeTilRad = pølse.kilde,
-                sisteKildeId = pølse.kilde
-            )
+            .copy(kildeTilRad = pølse.kilde)
     }
     fun nyPølse(pølse: Pølse): Pølserad {
         return this.copy(
             pølser = pølser
                 .filterNot { it.vedtaksperiodeId == pølse.vedtaksperiodeId }
-                .plusElement(pølse),
-            sisteKildeId = pølse.kilde
+                .plusElement(pølse)
         )
     }
 
@@ -38,13 +33,12 @@ data class Pølserad(
             pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, status) }
         )
     }
-    fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad, sisteKildeId)
+    fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)
 
     companion object {
         fun fraDto(dto: PølseradDto) = Pølserad(
             pølser = dto.pølser.map { Pølse.fraDto(it) },
-            kildeTilRad = dto.kildeTilRad,
-            sisteKildeId = dto.sisteKildeId
+            kildeTilRad = dto.kildeTilRad
         )
     }
 }

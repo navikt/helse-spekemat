@@ -34,7 +34,6 @@ class SpleisClient(
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private const val CALL_ID_HEADER = "callId"
-        private val UKJENT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
     }
     fun hentSpeilJson(fnr: String, callId: String = UUID.randomUUID().toString()): List<YrkesaktivitetDto> {
         val request = lagRequest(fnr, callId)
@@ -79,8 +78,7 @@ class SpleisClient(
     private fun parsePølserad(pølserad: SpleisGenerasjonerResponse): PølseradDto {
         return PølseradDto(
             kildeTilRad = pølserad.kildeTilGenerasjon,
-            pølser = pølserad.perioder.map { mapPølse(it) },
-            sisteKildeId = UKJENT_UUID
+            pølser = pølserad.perioder.map { mapPølse(it) }
         )
     }
 
