@@ -1,4 +1,4 @@
-val rapidsAndRiversVersion = "2024010209171704183456.6d035b91ffb4"
+val rapidsAndRiversVersion = "2024020421191707077994.337b557194f1"
 val tbdLibsVersion = "2024.01.24-11.14-4b94ed8b"
 val mockkVersion = "1.13.9"
 
