@@ -23,6 +23,9 @@ spec:
     path: /isready
   prometheus:
     path: /metrics
+  preStopHook:
+    http:
+      path: /stop
   secureLogs:
     enabled: true
   kafka:
