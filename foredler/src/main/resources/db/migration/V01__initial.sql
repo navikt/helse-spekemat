@@ -25,7 +25,7 @@ create table polsepakke(
     yrkesaktivitetidentifikator varchar(32) not null,
     hendelse_id bigint references hendelse(id) on delete restrict not null,
     kilde_id uuid not null,
-    data text not null,
+    data json not null,
     oppdatert timestamp with time zone default (now() at time zone 'UTC') not null
 );
 CREATE UNIQUE INDEX polsepakke_per_yrkesaktivitet ON polsepakke(person_id,yrkesaktivitetidentifikator);

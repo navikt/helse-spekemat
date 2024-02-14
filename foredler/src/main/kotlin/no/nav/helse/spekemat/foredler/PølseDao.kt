@@ -123,7 +123,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         @Language("PostgreSQL")
         private const val OPPRETT_PØLSEPAKKE = """
             INSERT INTO polsepakke (person_id, yrkesaktivitetidentifikator, hendelse_id, kilde_id, data)
-            VALUES (:personId, :yid, :hendelseId, :kildeId, :data)
+            VALUES (:personId, :yid, :hendelseId, :kildeId, CAST(:data AS json))
             ON CONFLICT (person_id, yrkesaktivitetidentifikator) DO UPDATE SET 
                 hendelse_id = EXCLUDED.hendelse_id,
                 kilde_id = EXCLUDED.kilde_id,
