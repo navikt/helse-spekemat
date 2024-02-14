@@ -204,6 +204,9 @@ class E2ETest {
                 assertEquals(2, a2.rader.single().pølser.size)
             }
         }
+        assertEquals(2, antallHistorikkinnslag(FNR))
+        assertEquals(1, antallHistorikkinnslag(FNR, A1))
+        assertEquals(1, antallHistorikkinnslag(FNR, A2))
     }
 
     @Test
@@ -261,9 +264,9 @@ class E2ETest {
 
         sendHentPølserRequest(FNR).also { response ->
             val result = response.body<PølserResponse>()
-            assertEquals(2, result.yrkesaktiviteter.size)
+            assertEquals(1, result.yrkesaktiviteter.size)
 
-            result.yrkesaktiviteter.single { it.yrkesaktivitetidentifikator == A1 }.also { ag ->
+            result.yrkesaktiviteter.single().also { ag ->
                 assertEquals(A1, ag.yrkesaktivitetidentifikator)
                 assertEquals(5, ag.rader.size)
 
@@ -292,15 +295,24 @@ class E2ETest {
                     assertEquals(2, rad.pølser.size)
                 }
             }
-            result.yrkesaktiviteter.single { it.yrkesaktivitetidentifikator == A2 }.also { ag ->
-                assertEquals(A2, ag.yrkesaktivitetidentifikator)
-                assertTrue(ag.rader.isEmpty())
-            }
         }
     }
 
     private fun enVedtaksperiode() = UUID.randomUUID()
     private fun enGenerasjonId() = UUID.randomUUID()
+
+    private fun antallHistorikkinnslag(fnr: String) =
+        sessionOf(dataSource.ds).use {
+            it.run(queryOf("SELECT COUNT(1) FROM polsepakke_historikk WHERE person_id=(SELECT id FROM person WHERE fnr=?)", fnr).map {
+                it.long(1)
+            }.asSingle)!!
+        }
+    private fun antallHistorikkinnslag(fnr: String, yrkesaktivitetidentifikator: String) =
+        sessionOf(dataSource.ds).use {
+            it.run(queryOf("SELECT COUNT(1) FROM polsepakke_historikk WHERE yrkesaktivitetidentifikator=? AND person_id=(SELECT id FROM person WHERE fnr=?)", yrkesaktivitetidentifikator, fnr).map {
+                it.long(1)
+            }.asSingle)!!
+        }
 
     private fun verifiserPersonFinnes(fnr: String) {
         sessionOf(dataSource.ds).use {

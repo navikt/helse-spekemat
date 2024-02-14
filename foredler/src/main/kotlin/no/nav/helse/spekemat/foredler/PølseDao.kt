@@ -122,9 +122,9 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         return checkNotNull(run(queryOf(OPPRETT_PERSON, mapOf("fnr" to fnr)).map { rad -> rad.long("id") }.asSingle)) {
             "Forventet å finne person eller opprette en ny"
         }.also {  personId ->
-            oppretting().forEach {
-                lagre(personId, it.yrkesaktivitetidentifikator, it.rader, UKJENT_UUID, UUID.randomUUID(), "{}")
-            }
+            oppretting()
+                .filter { it.rader.isNotEmpty() }
+                .forEach { lagre(personId, it.yrkesaktivitetidentifikator, it.rader, UKJENT_UUID, UUID.randomUUID(), "{}") }
         }
     }
 
