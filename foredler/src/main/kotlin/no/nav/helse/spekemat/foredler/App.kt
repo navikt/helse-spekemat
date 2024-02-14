@@ -153,7 +153,7 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
 
 private class StaticDataSource(hikariConfig: HikariConfig) : DatasourceProvider {
     private val ds by lazy { // by lazy slik at vi lager én verdi, men først når noen trenger den
-        hikariConfig.maximumPoolSize = 1
+        hikariConfig.maximumPoolSize = 5
         HikariDataSource(hikariConfig)
     }
 
