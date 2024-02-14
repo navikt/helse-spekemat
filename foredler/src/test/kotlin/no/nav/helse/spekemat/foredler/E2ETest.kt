@@ -453,7 +453,7 @@ private class TestContext(
         }
 
     suspend fun sendSlettRequest(fnr: String) =
-        client.post("/api/slett") {
+        client.delete("/api/person") {
             contentType(ContentType.Application.Json)
             setBody(SlettRequest(fnr))
         }.also {

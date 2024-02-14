@@ -33,6 +33,10 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.rader).pakke())
     }
 
+    fun personFinnes(fnr: String) = sessionOf(dataSource.getDataSource()).use { session ->
+        session.transaction { it.hentPerson(fnr) }
+    } != null
+
     private fun hentYrkesaktivitet(fnr: String, yrkesaktivitetidentifikator: String) =
         sessionOf(dataSource.getDataSource()).use { session ->
             session.run(queryOf(HENT_PØLSEPAKKE, mapOf("fnr" to fnr, "yid" to yrkesaktivitetidentifikator)).map { rad ->

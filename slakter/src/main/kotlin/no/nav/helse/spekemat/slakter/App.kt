@@ -27,6 +27,7 @@ fun main() {
             GenerasjonOpprettetRiver(this, pølsetjeneste)
             GenerasjonLukketRiver(this, pølsetjeneste)
             GenerasjonForkastetRiver(this, pølsetjeneste)
+            AvstemmingRiver(this, pølsetjeneste)
         }
         .start()
 }

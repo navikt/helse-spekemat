@@ -1,6 +1,7 @@
 package no.nav.helse.spekemat.foredler
 
 import io.ktor.server.application.*
+import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.fabrikk.Pølse
 import no.nav.helse.spekemat.fabrikk.PølseDto
 import no.nav.helse.spekemat.fabrikk.Pølsefabrikk
@@ -27,6 +28,7 @@ interface Pølsetjeneste {
         hendelsedata: String,
         callId: String
     )
+    fun opprettManglendePerson(fnr: String, callId: String)
     fun hent(fnr: String): List<YrkesaktivitetDto>
     fun slett(fnr: String)
 }
@@ -39,6 +41,7 @@ class Pølsetjenesten(
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private val UKJENT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
+        private val String.maskertFnr get() = take(6).padEnd(11, '*')
     }
     override fun nyPølse(
         fnr: String,
@@ -70,6 +73,15 @@ class Pølsetjenesten(
 
         val resultat = fabrikk.pakke()
         dao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, hendelsedata)
+    }
+
+    override fun opprettManglendePerson(fnr: String, callId: String) {
+        if (dao.personFinnes(fnr)) return
+        val result = hentPersonFraSpleis(fnr, callId)
+        "Opprettet ${result.size} pølsepakker for ${fnr.maskertFnr}".also {
+            logg.info(it, kv("callId", callId))
+            sikkerlogg.info(it, kv("fnr", fnr), kv("callId", callId))
+        }
     }
 
     private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, callId: String): Pølsefabrikk {

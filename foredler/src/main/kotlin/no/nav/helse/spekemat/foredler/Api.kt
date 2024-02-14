@@ -11,14 +11,24 @@ import no.nav.helse.spekemat.fabrikk.*
 import java.util.UUID
 
 fun Route.api(pølsetjeneste: Pølsetjeneste) {
-
-    post("/api/slett") {
-        val request = call.receiveNullable<SlettRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request",
-            callId = call.callId
-        ))
-        pølsetjeneste.slett(request.fnr)
-        call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+    route("/api/person") {
+        post {
+            val request = call.receiveNullable<OpprettRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
+                feilmelding = "Ugyldig request",
+                callId = call.callId
+            ))
+            val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
+            pølsetjeneste.opprettManglendePerson(request.fnr, callId)
+            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+        }
+        delete {
+            val request = call.receiveNullable<SlettRequest>() ?: return@delete call.respond(HttpStatusCode.BadRequest, FeilResponse(
+                feilmelding = "Ugyldig request",
+                callId = call.callId
+            ))
+            pølsetjeneste.slett(request.fnr)
+            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+        }
     }
 
     post("/api/pølse") {
@@ -85,6 +95,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
     }
 }
 
+data class OpprettRequest(val fnr: String)
 data class SlettRequest(val fnr: String)
 data class PølserRequest(val fnr: String)
 data class PølserResponse(val yrkesaktiviteter: List<YrkesaktivitetDto>)

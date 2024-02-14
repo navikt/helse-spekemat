@@ -25,6 +25,7 @@ interface Pølsetjeneste {
     fun generasjonLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun generasjonForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun slett(fnr: String)
+    fun opprett(fnr: String)
 }
 
 class Pølsetjenesten(
@@ -40,6 +41,10 @@ class Pølsetjenesten(
     }
     override fun slett(fnr: String) {
         val request = lagSlettRequest(fnr)
+        sjekkOKResponse(request)
+    }
+    override fun opprett(fnr: String) {
+        val request = lagOpprettRequest(fnr)
         sjekkOKResponse(request)
     }
 
@@ -115,7 +120,19 @@ class Pølsetjenesten(
         val requestBody = """{
             | "fnr": "$fnr"
             |}""".trimMargin()
-        return lagPOSTRequest(URI("http://spekemat/api/slett"), requestBody)
+        return lagDELETERequest(URI("http://spekemat/api/person"), requestBody)
+    }
+
+    private fun lagOpprettRequest(fnr: String): HttpRequest {
+        @Language("JSON")
+        val requestBody = """{
+            | "fnr": "$fnr"
+            |}""".trimMargin()
+        return lagPOSTRequest(URI("http://spekemat/api/person"), requestBody)
+    }
+
+    private fun lagDELETERequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
+        return lagRequest(uri, "DELETE", body, callId)
     }
 
     private fun lagPOSTRequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
