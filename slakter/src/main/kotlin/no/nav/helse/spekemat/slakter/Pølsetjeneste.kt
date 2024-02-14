@@ -1,5 +1,7 @@
 package no.nav.helse.spekemat.slakter
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -156,7 +158,11 @@ class Pølsetjenesten(
     )
 }
 
-data class FeilmeldingResponse(val feilmelding: String)
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class FeilmeldingResponse(
+    val feilmelding: String,
+    val callId: String?
+)
 class IkkeFunnetException(override val message: String?, val callId: String, val feilmeldingResponse: FeilmeldingResponse?) : RuntimeException()
 
 enum class PølsestatusDto { LUKKET, FORKASTET }
