@@ -1,6 +1,5 @@
 package no.nav.helse.spekemat.foredler
 
-import io.ktor.server.application.*
 import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.fabrikk.Pølse
 import no.nav.helse.spekemat.fabrikk.PølseDto
@@ -40,7 +39,6 @@ class Pølsetjenesten(
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
-        private val UKJENT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
         private val String.maskertFnr get() = take(6).padEnd(11, '*')
     }
     override fun nyPølse(
@@ -51,11 +49,10 @@ class Pølsetjenesten(
         hendelsedata: String,
         callId: String
     ) {
-        val fabrikk = hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, callId)
-        fabrikk.nyPølse(Pølse.fraDto(pølse))
-
-        val resultat = fabrikk.pakke()
-        dao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, hendelsedata)
+        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, callId) { fabrikk ->
+            fabrikk.nyPølse(Pølse.fraDto(pølse))
+            pølse
+        }
     }
 
     override fun oppdaterPølse(
@@ -68,35 +65,24 @@ class Pølsetjenesten(
         hendelsedata: String,
         callId: String
     ) {
-        val fabrikk = hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, callId)
-        val pølse = fabrikk.oppdaterPølse(vedtaksperiodeId, generasjonId, status)
-
-        val resultat = fabrikk.pakke()
-        dao.opprett(fnr, yrkesaktivitetidentifikator, resultat, pølse.kilde, meldingsreferanseId, hendelsedata)
+        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, callId) { fabrikk ->
+            fabrikk.oppdaterPølse(vedtaksperiodeId, generasjonId, status)
+        }
     }
 
     override fun opprettManglendePerson(fnr: String, callId: String) {
-        if (dao.personFinnes(fnr)) return
-        val result = hentPersonFraSpleis(fnr, callId)
-        "Opprettet ${result.size} pølsepakker for ${fnr.maskertFnr}".also {
-            logg.info(it, kv("callId", callId))
-            sikkerlogg.info(it, kv("fnr", fnr), kv("callId", callId))
-        }
+        val oppretting = { spleisClient.hentSpeilJson(fnr, callId).also { result ->
+            "Opprettet ${result.size} pølsepakker for ${fnr.maskertFnr}".also {
+                logg.info(it, kv("callId", callId))
+                sikkerlogg.info(it, kv("fnr", fnr), kv("callId", callId))
+            }
+        } }
+        dao.opprettPerson(fnr, oppretting)
     }
 
-    private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, callId: String): Pølsefabrikk {
-        val person = dao.hent(fnr).takeUnless(List<*>::isEmpty) ?: hentPersonFraSpleis(fnr, callId)
-        return person.singleOrNull { it.yrkesaktivitetidentifikator == yrkesaktivitetidentifikator }?.let {
-            Pølsefabrikk.gjenopprett(it.rader)
-        } ?: Pølsefabrikk()
-    }
-
-    private fun hentPersonFraSpleis(fnr: String, callId: String): List<YrkesaktivitetDto> {
-        val yrkesaktiviteter = spleisClient.hentSpeilJson(fnr, callId)
-        yrkesaktiviteter.forEach {
-            dao.opprett(fnr, it.yrkesaktivitetidentifikator, it.rader, UKJENT_UUID, UUID.randomUUID(), "{}")
-        }
-        return yrkesaktiviteter
+    private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, meldingsreferanseId: UUID, hendelsedata: String, callId: String, behandling: (Pølsefabrikk) -> PølseDto) {
+        val oppretting = { spleisClient.hentSpeilJson(fnr, callId) }
+        dao.behandle(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, oppretting, behandling)
     }
 
     override fun hent(fnr: String): List<YrkesaktivitetDto> {

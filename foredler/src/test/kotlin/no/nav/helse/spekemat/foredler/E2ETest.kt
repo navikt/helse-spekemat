@@ -244,9 +244,9 @@ class E2ETest {
         val v1 = enVedtaksperiode()
 
         sendNyPølseRequest(FNR, A1, v1)
-        assertNotNull(dao.hent(FNR, A1))
+        verifiserYrkesaktivitetFinnes(FNR, A1)
         sendSlettRequest(FNR)
-        assertNull(dao.hent(FNR, A1))
+        verifiserYrkesaktivitetIkkeFinnes(FNR, A1)
     }
 
     @Test
@@ -307,6 +307,18 @@ class E2ETest {
             assertEquals(true, it.run(queryOf("SELECT EXISTS(SELECT 1 FROM person WHERE fnr = ?)", fnr).map { row -> row.boolean(1) }.asSingle))
         }
     }
+
+    private fun verifiserYrkesaktivitetFinnes(fnr: String, yrkesaktivitetidentifikator: String) {
+        assertTrue(yrkesaktivitetFinnes(fnr, yrkesaktivitetidentifikator))
+    }
+    private fun verifiserYrkesaktivitetIkkeFinnes(fnr: String, yrkesaktivitetidentifikator: String) {
+        assertFalse(yrkesaktivitetFinnes(fnr, yrkesaktivitetidentifikator))
+    }
+    private fun yrkesaktivitetFinnes(fnr: String, yrkesaktivitetidentifikator: String) =
+        sessionOf(dataSource.ds).use {
+            it.run(queryOf("SELECT EXISTS(SELECT 1 FROM polsepakke WHERE yrkesaktivitetidentifikator = ? AND person_id = (SELECT id FROM person WHERE fnr = ?))", yrkesaktivitetidentifikator, fnr).map { row -> row.boolean(1) }.asSingle)
+        } ?: false
+
     private fun verifiserHendelseFinnes(id: UUID) {
         sessionOf(dataSource.ds).use {
             assertEquals(true, it.run(queryOf("SELECT EXISTS(SELECT 1 FROM hendelse WHERE meldingsreferanse_id = ?)", id).map { row -> row.boolean(1) }.asSingle))
