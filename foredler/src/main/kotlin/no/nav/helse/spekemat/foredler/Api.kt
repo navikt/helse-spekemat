@@ -31,58 +31,60 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
         }
     }
 
-    post("/api/pølse") {
-        val request = call.receiveNullable<NyPølseRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request",
-            callId = call.callId
-        ))
-        val pølse = PølseDto(
-            vedtaksperiodeId = request.pølse.vedtaksperiodeId,
-            generasjonId = request.pølse.generasjonId,
-            status = Pølsestatus.ÅPEN,
-            kilde = request.pølse.kilde
-        )
-        val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
-        pølsetjeneste.nyPølse(
-            request.fnr,
-            request.yrkesaktivitetidentifikator,
-            pølse,
-            request.meldingsreferanseId,
-            request.hendelsedata,
-            callId
-        )
-        call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
-    }
-
-    patch("/api/pølse") {
-        val request = call.receiveNullable<OppdaterPølseRequest>() ?: return@patch call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request",
-            callId = call.callId
-        ))
-        val status = when (request.status) {
-            PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
-            PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
-            PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
-        }
-        val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
-        try {
-            pølsetjeneste.oppdaterPølse(
+    route("/api/pølse") {
+        post {
+            val request = call.receiveNullable<NyPølseRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
+                feilmelding = "Ugyldig request",
+                callId = call.callId
+            ))
+            val pølse = PølseDto(
+                vedtaksperiodeId = request.pølse.vedtaksperiodeId,
+                generasjonId = request.pølse.generasjonId,
+                status = Pølsestatus.ÅPEN,
+                kilde = request.pølse.kilde
+            )
+            val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
+            pølsetjeneste.nyPølse(
                 request.fnr,
                 request.yrkesaktivitetidentifikator,
-                request.vedtaksperiodeId,
-                request.generasjonId,
-                status,
+                pølse,
                 request.meldingsreferanseId,
                 request.hendelsedata,
                 callId
             )
             call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
-        } catch (err: OppdatererEldreGenerasjonException) {
-            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag, men jeg tror du er litt out-of-order? Endringen er allerede hensyntatt 😚" }""" }
-        } catch (err: TomPølsepakkeException) {
-            throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
-        } catch (err: PølseFinnesIkkeException) {
-            throw NotFoundException("Pølse finnes ikke: ${err.message}")
+        }
+
+        patch {
+            val request = call.receiveNullable<OppdaterPølseRequest>() ?: return@patch call.respond(HttpStatusCode.BadRequest, FeilResponse(
+                feilmelding = "Ugyldig request",
+                callId = call.callId
+            ))
+            val status = when (request.status) {
+                PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
+                PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
+                PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
+            }
+            val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
+            try {
+                pølsetjeneste.oppdaterPølse(
+                    request.fnr,
+                    request.yrkesaktivitetidentifikator,
+                    request.vedtaksperiodeId,
+                    request.generasjonId,
+                    status,
+                    request.meldingsreferanseId,
+                    request.hendelsedata,
+                    callId
+                )
+                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+            } catch (err: OppdatererEldreGenerasjonException) {
+                call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag, men jeg tror du er litt out-of-order? Endringen er allerede hensyntatt 😚" }""" }
+            } catch (err: TomPølsepakkeException) {
+                throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
+            } catch (err: PølseFinnesIkkeException) {
+                throw NotFoundException("Pølse finnes ikke: ${err.message}")
+            }
         }
     }
 
