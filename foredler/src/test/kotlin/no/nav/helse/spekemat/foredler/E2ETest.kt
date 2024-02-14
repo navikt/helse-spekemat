@@ -108,6 +108,25 @@ class E2ETest {
     }
 
     @Test
+    fun `oppdatering på eldre pølse`() = foredlerTestApp {
+        val v1 = enVedtaksperiode()
+        val g1 = enGenerasjonId()
+        val g2 = enGenerasjonId()
+
+        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
+        sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
+
+        val revurderinghendelse = UUID.randomUUID()
+        sendNyPølseRequest(FNR, A1, v1, generasjonId = g2, kildeId = revurderinghendelse)
+        sendOppdaterPølseRequest(FNR, A1, v1, g2, status = PølsestatusDto.LUKKET, hendelseId = revurderinghendelse)
+
+        sendOppdaterPølseRequest(FNR, A1, v1, g1, PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.OK).also { response ->
+            val feilmelding = objectMapper.readValue<OkMeldingResponse>(response.bodyAsText())
+            assertTrue(feilmelding.melding.contains("jeg tror du er litt out-of-order?"))
+        }
+    }
+
+    @Test
     fun `ett vedtak`() = foredlerTestApp {
         val hendelseId = UUID.randomUUID()
         val kildeId = UUID.randomUUID()
@@ -441,6 +460,8 @@ private class TestContext(
             assertTrue(it.status.isSuccess())
         }
 }
+
+private data class OkMeldingResponse(val melding: String)
 
 class LokalePayload(claims: Map<String, String>) : Payload {
     private val claims = claims.mapValues { LokaleClaim(it.value) }

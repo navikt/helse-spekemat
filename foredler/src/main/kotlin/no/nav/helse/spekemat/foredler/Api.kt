@@ -67,6 +67,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
                 callId
             )
             call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
+        } catch (err: OppdatererEldreGenerasjonException) {
+            call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag, men jeg tror du er litt out-of-order? Endringen er allerede hensyntatt 😚" }""" }
         } catch (err: TomPølsepakkeException) {
             throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
         } catch (err: PølseFinnesIkkeException) {

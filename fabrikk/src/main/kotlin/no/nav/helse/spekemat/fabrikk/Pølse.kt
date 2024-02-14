@@ -33,9 +33,7 @@ data class Pølse(
 
     fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): Pølse {
         if (this.vedtaksperiodeId != vedtaksperiodeId) return this
-        check(this.generasjonId == generasjonId) {
-            "Det er gjort forsøk på å oppdatere en generasjon som ikke samsvarer med den som er registrert i nyeste rad"
-        }
+        if (this.generasjonId != generasjonId) throw OppdatererEldreGenerasjonException("Det er gjort forsøk på å oppdatere en generasjon som ikke samsvarer med den som er registrert i nyeste rad")
         return this.copy(status = status)
     }
 
@@ -52,3 +50,5 @@ data class Pølse(
         )
     }
 }
+
+class OppdatererEldreGenerasjonException(override val message: String?) : IllegalStateException()

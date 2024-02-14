@@ -38,6 +38,20 @@ class PølsefabrikkTest : PølseTest() {
     }
 
     @Test
+    fun `oppdatering på eldre pølse`() {
+        val p1 = 1.januar til 5.januar
+        val p1Revurdering = p1.nyGenerasjon()
+
+        fabrikk.nyPølse(p1)
+        fabrikk.lukketPølse(p1)
+        fabrikk.nyPølse(p1Revurdering)
+
+        assertThrows<OppdatererEldreGenerasjonException> {
+            fabrikk.lukketPølse(p1)
+        }
+    }
+
+    @Test
     fun `en ny pølse`() {
         val p1 = 1.januar til 5.januar
 
