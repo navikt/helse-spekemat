@@ -28,12 +28,14 @@ spec:
     inbound:
       rules:
         - application: spekemat-slakter
+        - application: spleis-api
     outbound:
       rules:
         - application: spleis-api
   gcp:
     sqlInstances:
       - type: POSTGRES_15
+        tier: {{databaseTier}}
         diskAutoresize: true
         databases:
           - name: spekemat

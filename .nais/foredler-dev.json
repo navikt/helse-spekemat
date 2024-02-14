@@ -1,3 +1,4 @@
 {
-  "ingress": "https://spekemat.intern.dev.nav.no"
+  "ingress": "https://spekemat.intern.dev.nav.no",
+  "databaseTier": "db-f1-micro"
 }
