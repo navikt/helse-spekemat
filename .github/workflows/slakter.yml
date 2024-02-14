@@ -10,10 +10,8 @@ on:
       - 'settings.gradle.kts'
       - '.github/workflows/slakter.yml'
       - '.nais/slakter.yml'
-      - '.nais/slakter-slakter-dev.json'
-
-env:
-  ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
+      - '.nais/slakter-dev.json'
+      - '.nais/slakter-prod.json'
 
 jobs:
   build:
@@ -54,4 +52,17 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/slakter.yml
           VARS: .nais/slakter-dev.json
+          IMAGE: ${{ needs.build.outputs.image }}
+  deployProd:
+    name: deploy to prod
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/slakter.yml
+          VARS: .nais/slakter-prod.json
           IMAGE: ${{ needs.build.outputs.image }}

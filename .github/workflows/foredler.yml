@@ -11,10 +11,8 @@ on:
       - 'settings.gradle.kts'
       - '.github/workflows/foredler.yml'
       - '.nais/foredler.yml'
-      - '.nais/foredler-foredler-dev.json'
-
-env:
-  ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
+      - '.nais/foredler-dev.json'
+      - '.nais/foredler-prod.json'
 
 jobs:
   build:
@@ -31,6 +29,8 @@ jobs:
           cache: 'gradle'
       - name: gradle
         run: ./gradlew :foredler:build
+        env:
+          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
       - name: build docker image
         uses: nais/docker-build-push@v0
         id: docker-build-push
@@ -55,4 +55,17 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/foredler.yml
           VARS: .nais/foredler-dev.json
+          IMAGE: ${{ needs.build.outputs.image }}
+  deployProd:
+    name: deploy to prod
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/foredler.yml
+          VARS: .nais/foredler-prod.json
           IMAGE: ${{ needs.build.outputs.image }}

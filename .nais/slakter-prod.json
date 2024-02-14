@@ -1,4 +1,4 @@
 {
-  "kafkaPool": "nav-dev",
+  "kafkaPool": "nav-prod",
   "consumerGroupId": "tbd-spekemat-v1"
 }
