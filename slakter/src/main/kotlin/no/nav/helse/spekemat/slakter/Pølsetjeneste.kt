@@ -1,11 +1,11 @@
 package no.nav.helse.spekemat.slakter
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
+import com.github.navikt.tbd_libs.retry.retryBlocking
 import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.slakter.PølsestatusDto.*
 import org.intellij.lang.annotations.Language
@@ -41,16 +41,16 @@ class Pølsetjenesten(
     }
     override fun slett(fnr: String) {
         val request = lagSlettRequest(fnr)
-        sjekkOKResponse(request)
+        sjekkOKResponseOgRetry(request)
     }
     override fun opprett(fnr: String) {
         val request = lagOpprettRequest(fnr)
-        sjekkOKResponse(request)
+        sjekkOKResponseOgRetry(request)
     }
 
     override fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
         val request = lagPølseRequest(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
-        sjekkOKResponse(request)
+        sjekkOKResponseOgRetry(request)
     }
 
     override fun generasjonLukket(
@@ -62,7 +62,7 @@ class Pølsetjenesten(
         hendelsedata: String
     ) {
         val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = LUKKET, meldingsreferanseId, hendelsedata)
-        sjekkOKResponse(request)
+        sjekkOKResponseOgRetry(request)
     }
 
     override fun generasjonForkastet(
@@ -74,14 +74,16 @@ class Pølsetjenesten(
         hendelsedata: String
     ) {
         val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = FORKASTET, meldingsreferanseId, hendelsedata)
-        sjekkOKResponse(request)
+        sjekkOKResponseOgRetry(request)
     }
 
-    private fun sjekkOKResponse(request: HttpRequest) {
-        val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
-        sjekkOKResponse(response)
-        val callId = response.callId
-        sikkerlogg.info("mottok {}:\n${response.body()}", kv("callId", callId))
+    private fun sjekkOKResponseOgRetry(request: HttpRequest) {
+        retryBlocking(avbryt = { it is IkkeFunnetException }) {
+            val response = httpClient.send(request, BodyHandlers.ofString(StandardCharsets.UTF_8))
+            sjekkOKResponse(response)
+            val callId = response.callId
+            sikkerlogg.info("mottok {}:\n${response.body()}", kv("callId", callId))
+        }
     }
 
     private fun sjekkOKResponse(response: HttpResponse<String>) {
