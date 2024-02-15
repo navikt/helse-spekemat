@@ -20,7 +20,7 @@ internal class AvstemmingRiver(
     init {
         River(rapidsConnection).apply {
             validate {
-                it.demandValue("@event_name", "avstemming")
+                it.demandValue("@event_name", "person_avstemt")
                 it.requireKey("@id", "fødselsnummer")
             }
         }.register(this)
