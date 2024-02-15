@@ -34,7 +34,8 @@ interface Pølsetjeneste {
 
 class Pølsetjenesten(
     private val dao: PølseDao,
-    private val spleisClient: SpleisClient
+    private val spleisClient: SpleisClient,
+    private val migrerVedOpprettelse: Boolean = false
 ) : Pølsetjeneste {
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
@@ -81,7 +82,7 @@ class Pølsetjenesten(
     }
 
     private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, meldingsreferanseId: UUID, hendelsedata: String, callId: String, behandling: (Pølsefabrikk) -> PølseDto) {
-        val oppretting = { spleisClient.hentSpeilJson(fnr, callId) }
+        val oppretting = { if (migrerVedOpprettelse) spleisClient.hentSpeilJson(fnr, callId) else emptyList() }
         dao.behandle(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, oppretting, behandling)
     }
 

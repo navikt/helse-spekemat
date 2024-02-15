@@ -81,7 +81,7 @@ fun launchApp(env: Map<String, String>) {
 
     val dsProvider = StaticDataSource(hikariConfig)
     val dao = PølseDao(dsProvider)
-    val pølsetjenesten = Pølsetjenesten(dao, spleisClient)
+    val pølsetjenesten = Pølsetjenesten(dao, spleisClient, env["MIGRER_FRA_SPLEIS_VED_OPPRETTELSE"]?.toBoolean() ?: false)
 
     val app = embeddedServer(
         factory = CIO,

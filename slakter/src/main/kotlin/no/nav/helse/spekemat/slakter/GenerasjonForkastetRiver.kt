@@ -42,11 +42,8 @@ internal class GenerasjonForkastetRiver(
         logg.info("Håndterer generasjon_forkastet {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
         sikkerlogg.info("Håndterer generasjon_forkastet {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId))
 
-        try {
+        feilhåndtering(logg, sikkerlogg) {
             pølsetjeneste.generasjonForkastet(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, meldingsreferanseId, packet.toJson())
-        } catch (err: IkkeFunnetException) {
-            logg.info("Vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.feilmelding}", kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId), kv("callId", err.callId), err)
-            sikkerlogg.info("Vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.feilmelding}", kv("fnr", fnr), kv("vedtaksperiodeId", vedtaksperiodeId), kv("generasjonId", generasjonId), kv("callId", err.callId), err)
         }
     }
 

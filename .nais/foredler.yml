@@ -42,3 +42,6 @@ spec:
             envVarPrefix: DATABASE
   ingresses:
     - {{ingress}}
+  env:
+    - name: MIGRER_FRA_SPLEIS_VED_OPPRETTELSE
+      value: "false"

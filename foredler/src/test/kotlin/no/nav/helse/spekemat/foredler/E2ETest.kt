@@ -58,7 +58,6 @@ class E2ETest {
     }
     private val mockHttpClient = mockk<java.net.http.HttpClient>(relaxed = true)
     private val spleisClient = SpleisClient(mockHttpClient, tokenProvider, "spleis-scope")
-    private val pølsetjeneste = Pølsetjenesten(dao, spleisClient)
     private val objectMapper = jacksonObjectMapper()
         .registerModule(JavaTimeModule())
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -254,7 +253,7 @@ class E2ETest {
     }
 
     @Test
-    fun `migrerer person fra spleis`() = foredlerTestApp {
+    fun `migrerer person fra spleis`() = foredlerTestApp(Pølsetjenesten(dao, spleisClient, true)) {
         val testfil = this::class.java.classLoader.getResourceAsStream("spleispersoner/normal_muffins.json") ?: fail { "Klarte ikke å lese filen" }
         val normalMuffins = objectMapper.readValue<SpleisResponse>(testfil)
         mockSpleisResponse(normalMuffins.data.person.arbeidsgivere)
@@ -371,7 +370,7 @@ class E2ETest {
         } returns MockHttpResponse(responseBody, statusCode = 200)
     }
 
-    private fun foredlerTestApp(testblokk: suspend TestContext.() -> Unit) {
+    private fun foredlerTestApp(pølsetjeneste: Pølsetjeneste = Pølsetjenesten(dao, spleisClient), testblokk: suspend TestContext.() -> Unit) {
         val randomPort = ServerSocket(0).localPort
         testApplication {
             environment {
