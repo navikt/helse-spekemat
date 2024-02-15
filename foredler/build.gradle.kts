@@ -2,7 +2,7 @@ import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 
 val mainClass = "no.nav.helse.spekemat.AppKt"
 
-val tbdLibsVersion = "2024.01.26-10.10-af0ac44d"
+val tbdLibsVersion = "2024.02.09-10.44-24d5802f"
 val logbackClassicVersion = "1.4.14"
 val logbackEncoderVersion = "7.4"
 val jacksonVersion = "2.16.1"

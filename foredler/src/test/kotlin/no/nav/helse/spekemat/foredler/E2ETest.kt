@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureToken
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.mock.MockHttpResponse
+import com.github.navikt.tbd_libs.test_support.CleanupStrategy
 import com.github.navikt.tbd_libs.test_support.DatabaseContainers
 import com.github.navikt.tbd_libs.test_support.TestDataSource
 import com.zaxxer.hikari.HikariConfig
@@ -44,7 +45,7 @@ class E2ETest {
         const val FNR = "12345678911"
         const val A1 = "987654321"
         const val A2 = "112233445"
-        private val databaseContainer = DatabaseContainers.container("spekemat", "person, hendelse")
+        private val databaseContainer = DatabaseContainers.container("spekemat", CleanupStrategy.tables("person, hendelse"))
     }
 
     private lateinit var dataSource: TestDataSource
