@@ -11,7 +11,7 @@ spec:
     type: RollingUpdate
   replicas:
     min: 2
-    max: 8
+    max: 24
     scalingStrategy:
       kafka:
         topic: tbd.rapid.v1
