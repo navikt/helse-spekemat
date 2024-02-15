@@ -133,6 +133,7 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
             ))
         }
         exception<Throwable> { call, cause ->
+            call.application.log.info("ukjent feil: ${cause.message}. svarer med InternalServerError og en feilmelding i JSON", cause)
             call.respond(HttpStatusCode.InternalServerError, FeilResponse(
                 feilmelding = "Tjeneren møtte på ein feilmelding: ${cause.message}\n${cause.stackTraceToString()}",
                 callId = call.callId
@@ -183,19 +184,14 @@ private val ignoredPaths = listOf(metricsEndpoint, isaliveEndpoint, isreadyEndpo
 
 private fun Application.requestResponseTracing(logger: Logger) {
     intercept(ApplicationCallPipeline.Monitoring) {
-        try {
-            if (call.request.uri in ignoredPaths) return@intercept proceed()
-            val headers = call.request.headers.toMap()
-                .filterNot { (key, _) -> key.lowercase() in listOf("authorization") }
-                .map { (key, values) ->
-                    keyValue("req_header_$key", values.joinToString(separator = ";"))
-                }.toTypedArray()
-            logger.info("{} {}", v("method", call.request.httpMethod.value), v("uri", call.request.uri), *headers)
-            proceed()
-        } catch (err: Throwable) {
-            logger.error("ukjent feil: ${err.message}", err)
-            throw err
-        }
+        if (call.request.uri in ignoredPaths) return@intercept proceed()
+        val headers = call.request.headers.toMap()
+            .filterNot { (key, _) -> key.lowercase() in listOf("authorization") }
+            .map { (key, values) ->
+                keyValue("req_header_$key", values.joinToString(separator = ";"))
+            }.toTypedArray()
+        logger.info("{} {}", v("method", call.request.httpMethod.value), v("uri", call.request.uri), *headers)
+        proceed()
     }
 
     sendPipeline.intercept(ApplicationSendPipeline.After) { message ->

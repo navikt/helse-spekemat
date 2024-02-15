@@ -93,7 +93,7 @@ class Pølsetjenesten(
     }
 
     private fun reagerPåFeilkode(statusCode: Int, callId: String, responseBody: String) {
-        sikkerlogg.error("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", statusCode, kv("callId", callId), responseBody)
+        sikkerlogg.info("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", statusCode, kv("callId", callId), responseBody)
         when (statusCode) {
             404 -> throw IkkeFunnetException("Vedtaksperioden eller personen finnes ikke", callId, parseResponseSomFeilmelding(responseBody))
             else -> throw RuntimeException("Forventet HTTP 200 for callId=${callId}. Fikk $statusCode")
