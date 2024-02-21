@@ -7,9 +7,9 @@ val logbackClassicVersion = "1.4.14"
 val logbackEncoderVersion = "7.4"
 val jacksonVersion = "2.16.1"
 val ktorVersion = "2.3.7"
-val flywayCoreVersion = "10.6.0"
+val flywayCoreVersion = "10.8.1"
 val hikariCPVersion = "5.1.0"
-val postgresqlVersion = "42.7.1"
+val postgresqlVersion = "42.7.2"
 val kotliqueryVersion = "1.9.0"
 val micrometerRegistryPrometheusVersion = "1.12.0"
 val mockKVersion = "1.13.9"
@@ -41,7 +41,6 @@ dependencies {
     api("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
-    api("org.flywaydb:flyway-core:$flywayCoreVersion")
     api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
     implementation("com.zaxxer:HikariCP:$hikariCPVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
