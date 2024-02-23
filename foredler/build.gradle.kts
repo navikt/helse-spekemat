@@ -11,7 +11,7 @@ val flywayCoreVersion = "10.8.1"
 val hikariCPVersion = "5.1.0"
 val postgresqlVersion = "42.7.2"
 val kotliqueryVersion = "1.9.0"
-val micrometerRegistryPrometheusVersion = "1.12.0"
+val micrometerRegistryPrometheusVersion = "1.12.3"
 val mockKVersion = "1.13.9"
 
 plugins {
