@@ -64,7 +64,7 @@ class E2EGenerasjonerTest {
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
                     && node.path("pølse").path("kilde").asText() == kilde.toString()
-                    && node.path("pølse").hasNonNull("generasjonId")
+                    && node.path("pølse").hasNonNull("behandlingId")
                     && hendelseData.path("@event_name").asText() == "generasjon_opprettet"
         }
     }
@@ -90,7 +90,7 @@ class E2EGenerasjonerTest {
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
-                    && node.path("generasjonId").asText() == generasjonId.toString()
+                    && node.path("behandlingId").asText() == generasjonId.toString()
                     && node.path("status").asText() == "LUKKET"
                     && hendelseData.path("@event_name").asText() == "generasjon_lukket"
         }
@@ -117,7 +117,7 @@ class E2EGenerasjonerTest {
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
-                    && node.path("generasjonId").asText() == generasjonId.toString()
+                    && node.path("behandlingId").asText() == generasjonId.toString()
                     && node.path("status").asText() == "FORKASTET"
                     && hendelseData.path("@event_name").asText() == "generasjon_forkastet"
         }

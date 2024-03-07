@@ -44,7 +44,7 @@ internal class BehandlingOpprettetRiver(
         val behandlingId = packet["generasjonId"].takeIf(JsonNode::isTextual)?.asUUID() ?: packet["behandlingId"].asUUID()
         val pølse = PølseDto(
             vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID(),
-            generasjonId = behandlingId,
+            behandlingId = behandlingId,
             kilde = packet["kilde.meldingsreferanseId"].asUUID()
         )
 

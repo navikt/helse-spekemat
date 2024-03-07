@@ -171,7 +171,7 @@ class Pølsetjenesten(
         val yrkesaktivitetidentifikator: String,
         val meldingsreferanseId: UUID,
         val vedtaksperiodeId: UUID,
-        val generasjonId: UUID,
+        val behandlingId: UUID,
         val status: PølsestatusDto,
         val hendelsedata: String
     )
@@ -188,6 +188,6 @@ enum class PølsestatusDto { LUKKET, FORKASTET }
 
 data class PølseDto(
     val vedtaksperiodeId: UUID,
-    val generasjonId: UUID,
+    val behandlingId: UUID,
     val kilde: UUID
 )
