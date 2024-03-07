@@ -17,7 +17,7 @@ abstract class PølseTest {
         vedtaksperiodeId: UUID,
         kilde: UUID = UUID.randomUUID(),
         status: Pølsestatus = Pølsestatus.ÅPEN
-    ) = UUID.randomUUID().let { behandlingId -> Pølse(vedtaksperiodeId, behandlingId, status, kilde) }
+    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), status, kilde)
 
     protected infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
     protected infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)

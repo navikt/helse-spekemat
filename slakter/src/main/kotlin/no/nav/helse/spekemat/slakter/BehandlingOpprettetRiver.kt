@@ -19,18 +19,9 @@ internal class BehandlingOpprettetRiver(
     init {
         River(rapidsConnection).apply {
             validate {
-                it.demandValue("@event_name", "generasjon_opprettet")
-                it.requireKey("@id", "fødselsnummer", "kilde.meldingsreferanseId", "vedtaksperiodeId", "generasjonId")
-                it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
-                it.interestedIn("behandlingId")
-            }
-        }.register(this)
-        River(rapidsConnection).apply {
-            validate {
                 it.demandValue("@event_name", "behandling_opprettet")
                 it.requireKey("@id", "fødselsnummer", "kilde.meldingsreferanseId", "vedtaksperiodeId", "behandlingId")
                 it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
-                it.interestedIn("generasjonId")
             }
         }.register(this)
     }
@@ -41,7 +32,7 @@ internal class BehandlingOpprettetRiver(
     }
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
-        val behandlingId = packet["generasjonId"].takeIf(JsonNode::isTextual)?.asUUID() ?: packet["behandlingId"].asUUID()
+        val behandlingId = packet["behandlingId"].asUUID()
         val pølse = PølseDto(
             vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID(),
             behandlingId = behandlingId,

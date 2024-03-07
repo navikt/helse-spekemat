@@ -85,7 +85,7 @@ class SpleisClient(
     private fun mapPølse(pølse: SpleisPeriodeResponse): PølseDto {
         return PølseDto(
             vedtaksperiodeId = pølse.vedtaksperiodeId,
-            behandlingId = pølse.generasjonId,
+            behandlingId = checkNotNull(pølse.generasjonId ?: pølse.behandlingId),
             status = parseStatus(pølse.periodetilstand),
             kilde = pølse.kilde
         )
@@ -135,10 +135,16 @@ data class SpleisResponse(
             ) {
                 data class SpleisPeriodeResponse(
                     val vedtaksperiodeId: UUID,
-                    val generasjonId: UUID,
+                    val generasjonId: UUID?,
+                    val behandlingId: UUID?,
                     val kilde: UUID,
                     val periodetilstand: SpleisPeriodetilstand
                 ) {
+                    init {
+                        check(generasjonId != null || behandlingId != null) {
+                            "må ha enten generasjonId eller behandlingId"
+                        }
+                    }
                     enum class SpleisPeriodetilstand {
                         TilUtbetaling,
                         TilAnnullering,

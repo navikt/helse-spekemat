@@ -19,18 +19,9 @@ internal class BehandlingLukketRiver(
     init {
         River(rapidsConnection).apply {
             validate {
-                it.demandValue("@event_name", "generasjon_lukket")
-                it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "generasjonId")
-                it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
-                it.interestedIn("behandlingId")
-            }
-        }.register(this)
-        River(rapidsConnection).apply {
-            validate {
                 it.demandValue("@event_name", "behandling_lukket")
                 it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "behandlingId")
                 it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
-                it.interestedIn("generasjonId")
             }
         }.register(this)
     }
@@ -42,7 +33,7 @@ internal class BehandlingLukketRiver(
 
     override fun onPacket(packet: JsonMessage, context: MessageContext) {
         val vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID()
-        val behandlingId = packet["generasjonId"].takeIf(JsonNode::isTextual)?.asUUID() ?: packet["behandlingId"].asUUID()
+        val behandlingId = packet["behandlingId"].asUUID()
 
         val meldingsreferanseId = packet["@id"].asUUID()
         val fnr = packet["fødselsnummer"].asText()

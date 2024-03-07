@@ -17,15 +17,6 @@ internal class Hendelsefabrikk(
     fun sendBehandlingForkastet(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
         rapidsConnection.sendTestMessage(lagBehandlingForkastet(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
     }
-    fun sendGenerasjonOpprettet(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), generasjonId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagGenerasjonOpprettet(meldingsreferanseId, vedtaksperiodeId, kilde, orgnr, generasjonId))
-    }
-    fun sendGenerasjonLukket(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), generasjonId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagGenerasjonLukket(meldingsreferanseId, vedtaksperiodeId, orgnr, generasjonId))
-    }
-    fun sendGenerasjonForkastet(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), generasjonId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagGenerasjonForkastet(meldingsreferanseId, vedtaksperiodeId, orgnr, generasjonId))
-    }
     @Language("JSON")
     fun lagBehandlingOpprettet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "behandling_opprettet",
@@ -55,37 +46,6 @@ internal class Hendelsefabrikk(
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
-        |}""".trimMargin()
-
-    @Language("JSON")
-    fun lagGenerasjonOpprettet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
-        |  "@event_name": "generasjon_opprettet",
-        |  "@id": "$meldingsreferanseId",
-        |  "kilde": {
-        |    "meldingsreferanseId": "$kilde"
-        |  },
-        |  "fødselsnummer": "$fnr",
-        |  "organisasjonsnummer": "$orgnr",
-        |  "vedtaksperiodeId": "$vedtaksperiodeId",
-        |  "generasjonId": "$generasjonId"
-        |}""".trimMargin()
-    @Language("JSON")
-    fun lagGenerasjonLukket(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
-        |  "@event_name": "generasjon_lukket",
-        |  "@id": "$meldingsreferanseId",
-        |  "fødselsnummer": "$fnr",
-        |  "organisasjonsnummer": "$orgnr",
-        |  "vedtaksperiodeId": "$vedtaksperiodeId",
-        |  "generasjonId": "$generasjonId"
-        |}""".trimMargin()
-    @Language("JSON")
-    fun lagGenerasjonForkastet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, generasjonId: UUID = UUID.randomUUID()) = """{
-        |  "@event_name": "generasjon_forkastet",
-        |  "@id": "$meldingsreferanseId",
-        |  "fødselsnummer": "$fnr",
-        |  "organisasjonsnummer": "$orgnr",
-        |  "vedtaksperiodeId": "$vedtaksperiodeId",
-        |  "generasjonId": "$generasjonId"
         |}""".trimMargin()
 
     fun sendSlettPerson() {
