@@ -12,7 +12,7 @@ class PølsefabrikkTest : PølseTest() {
     fun pølsesett() {
         val p1 = 1.januar til 2.januar
         val p2 = p1.som(vedtaksperiodeId = UUID.randomUUID())
-        val p3 = p1.nyGenerasjon()
+        val p3 = p1.nyBehandling()
         assertEquals(setOf(p1), setOf(p1, p1))
         assertEquals(setOf(p1, p2), setOf(p1, p2))
         assertEquals(setOf(p1), setOf(p1, p3))
@@ -40,13 +40,13 @@ class PølsefabrikkTest : PølseTest() {
     @Test
     fun `oppdatering på eldre pølse`() {
         val p1 = 1.januar til 5.januar
-        val p1Revurdering = p1.nyGenerasjon()
+        val p1Revurdering = p1.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
         fabrikk.nyPølse(p1Revurdering)
 
-        assertThrows<OppdatererEldreGenerasjonException> {
+        assertThrows<OppdatererEldreBehandlingException> {
             fabrikk.lukketPølse(p1)
         }
     }
@@ -90,7 +90,7 @@ class PølsefabrikkTest : PølseTest() {
     @Test
     fun `ett forkastet vedtak`() {
         val p1 = 1.januar til 5.januar
-        val p1Annullert = p1.nyGenerasjon()
+        val p1Annullert = p1.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -107,8 +107,8 @@ class PølsefabrikkTest : PølseTest() {
     fun `to annullerte vedtak etter hverandre`() {
         val p1 = 1.januar til 5.januar
         val p2 = 20.januar til 31.januar
-        val p1Annullert = p1.nyGenerasjon()
-        val p2Annullert = p2.nyGenerasjon()
+        val p1Annullert = p1.nyBehandling()
+        val p2Annullert = p2.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -131,8 +131,8 @@ class PølsefabrikkTest : PølseTest() {
         val p1 = 1.januar til 5.januar
         val p2 = 20.januar til 21.januar
         val p3 = 25.januar til 31.januar
-        val p1Annullert = p1.nyGenerasjon()
-        val p2Annullert = p2.nyGenerasjon()
+        val p1Annullert = p1.nyBehandling()
+        val p2Annullert = p2.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -165,7 +165,7 @@ class PølsefabrikkTest : PølseTest() {
     fun `revurdering av pølse etter forkasting`() {
         val p1 = 1.januar til 5.januar
         val p2 = 20.januar til 21.januar
-        val p1Revurdering = p1.nyGenerasjon()
+        val p1Revurdering = p1.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -187,9 +187,9 @@ class PølsefabrikkTest : PølseTest() {
         val p2 = 20.januar til 21.januar
         val p3 = 25.januar til 31.januar
 
-        val p1Annullert = p1.nyGenerasjon()
-        val p2Annullert = p2.nyGenerasjon()
-        val p3Revurdering = p3.nyGenerasjon()
+        val p1Annullert = p1.nyBehandling()
+        val p2Annullert = p2.nyBehandling()
+        val p3Revurdering = p3.nyBehandling()
 
         fabrikk.nyPølse(p1)
         fabrikk.lukketPølse(p1)
@@ -258,7 +258,7 @@ class PølsefabrikkTest : PølseTest() {
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
         val revurderingkilde = UUID.randomUUID()
-        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
+        val p2Revurdering = p2.nyBehandling(kilde = revurderingkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -281,8 +281,8 @@ class PølsefabrikkTest : PølseTest() {
 
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
-        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
-        val p1Revurdering = p1.nyGenerasjon(kilde = revurderingkilde)
+        val p2Revurdering = p2.nyBehandling(kilde = revurderingkilde)
+        val p1Revurdering = p1.nyBehandling(kilde = revurderingkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -304,8 +304,8 @@ class PølsefabrikkTest : PølseTest() {
 
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
-        val p2Revurdering = p2.nyGenerasjon(kilde = UUID.randomUUID())
-        val p1Revurdering = p1.nyGenerasjon(kilde = UUID.randomUUID())
+        val p2Revurdering = p2.nyBehandling(kilde = UUID.randomUUID())
+        val p1Revurdering = p1.nyBehandling(kilde = UUID.randomUUID())
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -328,8 +328,8 @@ class PølsefabrikkTest : PølseTest() {
 
         val p1 = 1.januar til 5.januar som v1
         val p2 = 6.januar til 10.januar som v2
-        val p2Revurdering = p2.nyGenerasjon(kilde = UUID.randomUUID())
-        val p1Revurdering = p1.nyGenerasjon(kilde = UUID.randomUUID())
+        val p2Revurdering = p2.nyBehandling(kilde = UUID.randomUUID())
+        val p1Revurdering = p1.nyBehandling(kilde = UUID.randomUUID())
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -356,8 +356,8 @@ class PølsefabrikkTest : PølseTest() {
         val p1 = 10.januar til 20.januar som v1
         val p2 = 21.januar til 31.januar som v2
         val p3 = 1.januar til 5.januar som v3 fordi oufOrderOrderkilde
-        val p2Revurdering = p2.nyGenerasjon(kilde = oufOrderOrderkilde)
-        val p1Revurdering = p1.nyGenerasjon(kilde = oufOrderOrderkilde)
+        val p2Revurdering = p2.nyBehandling(kilde = oufOrderOrderkilde)
+        val p1Revurdering = p1.nyBehandling(kilde = oufOrderOrderkilde)
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)
@@ -386,10 +386,10 @@ class PølsefabrikkTest : PølseTest() {
         val p1 = 10.januar til 20.januar som v2
         val p2 = 21.januar til 31.januar som v3
 
-        val p3Revurdering = p3.nyGenerasjon(kilde = revurderingkilde)
-        val p2Revurdering = p2.nyGenerasjon(kilde = revurderingkilde)
-        val p1Revurdering = p1.nyGenerasjon(kilde = revurderingkilde)
-        val p1Revurdering2 = p1.nyGenerasjon(kilde = UUID.randomUUID())
+        val p3Revurdering = p3.nyBehandling(kilde = revurderingkilde)
+        val p2Revurdering = p2.nyBehandling(kilde = revurderingkilde)
+        val p1Revurdering = p1.nyBehandling(kilde = revurderingkilde)
+        val p1Revurdering2 = p1.nyBehandling(kilde = UUID.randomUUID())
 
         fabrikk.nyPølse(p1)
         fabrikk.nyPølse(p2)

@@ -36,7 +36,7 @@ class PølsetjenestenTest {
         every { httpClientMock.send<String>(any(), any()) } returns MockHttpResponse(errorBody, 404, mapOf("callId" to "liksom call id"))
 
         val error = assertThrows<IkkeFunnetException> {
-            pølsetjeneste.generasjonForkastet(FNR, ORGN, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "{}")
+            pølsetjeneste.behandlingForkastet(FNR, ORGN, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "{}")
         }
         assertNotNull(error.feilmeldingResponse)
         assertTrue(error.feilmeldingResponse!!.feilmelding.contains("Ikke funnet"))

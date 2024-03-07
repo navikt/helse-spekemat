@@ -21,7 +21,7 @@ interface Pølsetjeneste {
         fnr: String,
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
-        generasjonId: UUID,
+        behandlingId: UUID,
         status: Pølsestatus,
         meldingsreferanseId: UUID,
         hendelsedata: String,
@@ -60,14 +60,14 @@ class Pølsetjenesten(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
-        generasjonId: UUID,
+        behandlingId: UUID,
         status: Pølsestatus,
         meldingsreferanseId: UUID,
         hendelsedata: String,
         callId: String
     ) {
         hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, callId) { fabrikk ->
-            fabrikk.oppdaterPølse(vedtaksperiodeId, generasjonId, status)
+            fabrikk.oppdaterPølse(vedtaksperiodeId, behandlingId, status)
         }
     }
 

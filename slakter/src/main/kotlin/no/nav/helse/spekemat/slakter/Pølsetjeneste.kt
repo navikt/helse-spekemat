@@ -21,9 +21,9 @@ import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 interface Pølsetjeneste {
-    fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
-    fun generasjonLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
-    fun generasjonForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
+    fun behandlingOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
+    fun behandlingLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
+    fun behandlingForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun slett(fnr: String)
     fun opprett(fnr: String)
 }
@@ -48,32 +48,32 @@ class Pølsetjenesten(
         sjekkOKResponseOgRetry(request)
     }
 
-    override fun generasjonOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
+    override fun behandlingOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
         val request = lagPølseRequest(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
     }
 
-    override fun generasjonLukket(
+    override fun behandlingLukket(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
-        generasjonId: UUID,
+        behandlingId: UUID,
         meldingsreferanseId: UUID,
         hendelsedata: String
     ) {
-        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = LUKKET, meldingsreferanseId, hendelsedata)
+        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, behandlingId, status = LUKKET, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
     }
 
-    override fun generasjonForkastet(
+    override fun behandlingForkastet(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
-        generasjonId: UUID,
+        behandlingId: UUID,
         meldingsreferanseId: UUID,
         hendelsedata: String
     ) {
-        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, generasjonId, status = FORKASTET, meldingsreferanseId, hendelsedata)
+        val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, behandlingId, status = FORKASTET, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
     }
 
@@ -112,8 +112,8 @@ class Pølsetjenesten(
         return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
-    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, generasjonId: UUID, status: PølsestatusDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
-        val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, generasjonId, status, hendelsedata))
+    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, status: PølsestatusDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
+        val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, behandlingId, status, hendelsedata))
         return lagPATCHRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 

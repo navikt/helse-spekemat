@@ -17,11 +17,11 @@ abstract class PølseTest {
         vedtaksperiodeId: UUID,
         kilde: UUID = UUID.randomUUID(),
         status: Pølsestatus = Pølsestatus.ÅPEN
-    ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), status, kilde)
+    ) = UUID.randomUUID().let { behandlingId -> Pølse(vedtaksperiodeId, behandlingId, behandlingId, status, kilde) }
 
     protected infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
     protected infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
-    protected fun Pølse.nyGenerasjon(generasjonId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID()) = fordi(kilde).copy(generasjonId = UUID.randomUUID())
+    protected fun Pølse.nyBehandling(behandlingId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID()) = fordi(kilde).copy(behandlingId = behandlingId, generasjonId = behandlingId)
     protected infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
 
     protected fun Pølse.lukket() = this.copy(status = Pølsestatus.LUKKET)
@@ -40,10 +40,10 @@ abstract class PølseTest {
     }
 
     protected fun Pølsefabrikk.lukketPølse(pølse: Pølse) {
-        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.LUKKET)
+        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.behandlingId, Pølsestatus.LUKKET)
     }
 
     protected fun Pølsefabrikk.pølseForkastet(pølse: Pølse) {
-        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.generasjonId, Pølsestatus.FORKASTET)
+        this.oppdaterPølse(pølse.vedtaksperiodeId, pølse.behandlingId, Pølsestatus.FORKASTET)
     }
 }

@@ -1,7 +1,6 @@
 package no.nav.helse.spekemat.slakter
 
 import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
-import com.github.navikt.tbd_libs.azure.createDefaultAzureTokenClient
 import no.nav.helse.rapids_rivers.RapidApplication
 import org.slf4j.LoggerFactory
 import java.net.http.HttpClient
@@ -24,9 +23,9 @@ fun main() {
         .apply {
             logg.info("Hei, er verden klar for pølser?")
             if (erUtvikling) SlettPersonRiver(this, pølsetjeneste)
-            GenerasjonOpprettetRiver(this, pølsetjeneste)
-            GenerasjonLukketRiver(this, pølsetjeneste)
-            GenerasjonForkastetRiver(this, pølsetjeneste)
+            BehandlingOpprettetRiver(this, pølsetjeneste)
+            BehandlingLukketRiver(this, pølsetjeneste)
+            BehandlingForkastetRiver(this, pølsetjeneste)
             AvstemmingRiver(this, pølsetjeneste)
             MigreringRiver(this, pølsetjeneste)
         }

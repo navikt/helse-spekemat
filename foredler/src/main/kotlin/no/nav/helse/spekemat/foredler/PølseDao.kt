@@ -10,6 +10,7 @@ import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.fabrikk.PølseDto
 import no.nav.helse.spekemat.fabrikk.Pølsefabrikk
 import no.nav.helse.spekemat.fabrikk.PølseradDto
+import no.nav.helse.spekemat.fabrikk.Pølsestatus
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -28,7 +29,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
     }
 
     fun hent(fnr: String) = hentPerson(fnr).map { (yrkesaktivitetidentifikator, rader) ->
-        YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.rader).pakke())
+        YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.tilModellDto()).pakke())
     }
 
     fun opprettPerson(fnr: String, oppretting: () -> List<YrkesaktivitetDto>) {
@@ -54,7 +55,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
                 val personId = session.hentEllerOpprettPerson(fnr, oppretting)
 
                 val fabrikk = session.hentPølsepakke(personId, yrkesaktivitetidentifikator)?.let { personrad ->
-                    Pølsefabrikk.gjenopprett(personrad.rader)
+                    Pølsefabrikk.gjenopprett(personrad.tilModellDto())
                 } ?: Pølsefabrikk()
 
                 val resultat = behandling(fabrikk)
@@ -81,7 +82,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         hendelsedata: String
     ) {
         val hendelseId = opprettHendelse(meldingsreferanseId, hendelsedata)
-        val pølsepakkejson = objectMapper.writeValueAsString(Personrad(rader = resultat))
+        val pølsepakkejson = objectMapper.writeValueAsString(Personrad.fraModellDto(resultat))
 
         run(queryOf(KOPIER_PØLSEPAKKE, mapOf("personId" to personId, "yid" to yrkesaktivitetidentifikator)).asExecute)
         run(queryOf(
@@ -129,8 +130,65 @@ class PølseDao(private val dataSource: DatasourceProvider) {
     }
 
     private data class Personrad(
-        val rader: List<PølseradDto>
-    )
+        val rader: List<PølseradDbDto>
+    ) {
+        companion object {
+            fun fraModellDto(rader: List<PølseradDto>) = Personrad(
+                rader = rader.map { rad ->
+                    PølseradDbDto(
+                        kildeTilRad = rad.kildeTilRad,
+                        pølser = rad.pølser.map { pølse ->
+                            PølseradDbDto.PølseDbDto(
+                                vedtaksperiodeId = pølse.vedtaksperiodeId,
+                                generasjonId = pølse.behandlingId,
+                                status = when (pølse.status) {
+                                    Pølsestatus.ÅPEN -> PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN
+                                    Pølsestatus.LUKKET -> PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET
+                                    Pølsestatus.FORKASTET -> PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET
+                                },
+                                kilde = pølse.kilde
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+        fun tilModellDto() = rader.map { rad ->
+            PølseradDto(
+                kildeTilRad = rad.kildeTilRad,
+                pølser = rad.pølser.map { pølse ->
+                    PølseDto(
+                        vedtaksperiodeId = pølse.vedtaksperiodeId,
+                        generasjonId = pølse.generasjonId,
+                        behandlingId = pølse.generasjonId,
+                        status = when (pølse.status) {
+                            PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN -> Pølsestatus.ÅPEN
+                            PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET -> Pølsestatus.LUKKET
+                            PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET -> Pølsestatus.FORKASTET
+                        },
+                        kilde = pølse.kilde
+                    )
+                }
+            )
+        }
+
+        data class PølseradDbDto(
+            val pølser: List<PølseDbDto>,
+            val kildeTilRad: UUID
+        ) {
+            data class PølseDbDto(
+                val vedtaksperiodeId: UUID,
+                // TODO: migrer navnet i json lagret i databasen med <behandlingId>
+                val generasjonId: UUID,
+                val status: PølseDbstatus,
+                // tingen som gjorde at behandlingen ble opprettet
+                val kilde: UUID
+            ) {
+                enum class PølseDbstatus { ÅPEN, LUKKET, FORKASTET }
+            }
+        }
+    }
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val objectMapper = jacksonObjectMapper()

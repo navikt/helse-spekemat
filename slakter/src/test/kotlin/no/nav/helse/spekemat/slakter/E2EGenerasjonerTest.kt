@@ -17,7 +17,7 @@ import java.net.http.HttpRequest
 import java.time.LocalDateTime
 import java.util.*
 
-class E2ETest {
+class E2EGenerasjonerTest {
     private companion object {
         const val FNR = "12345678911"
         const val ORGN = "987654321"
@@ -46,13 +46,13 @@ class E2ETest {
     }
 
     @Test
-    fun `behandling opprettet`() {
+    fun `generasjon opprettet`() {
         val vedtaksperiodeId = UUID.randomUUID()
         val kilde = UUID.randomUUID()
         val meldingsreferanseId = UUID.randomUUID()
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
+        hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -65,21 +65,21 @@ class E2ETest {
                     && node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
                     && node.path("pølse").path("kilde").asText() == kilde.toString()
                     && node.path("pølse").hasNonNull("generasjonId")
-                    && hendelseData.path("@event_name").asText() == "behandling_opprettet"
+                    && hendelseData.path("@event_name").asText() == "generasjon_opprettet"
         }
     }
 
     @Test
-    fun `behandling lukket`() {
+    fun `generasjon lukket`() {
         val vedtaksperiodeId = UUID.randomUUID()
         val kilde = UUID.randomUUID()
         val meldingsreferanseId = UUID.randomUUID()
-        val behandlingId = UUID.randomUUID()
+        val generasjonId = UUID.randomUUID()
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
 
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
-        hendelsefabrikk.sendBehandlingLukket(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
+        hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, generasjonId = generasjonId)
+        hendelsefabrikk.sendGenerasjonLukket(vedtaksperiodeId, ORGN, meldingsreferanseId, generasjonId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -90,23 +90,23 @@ class E2ETest {
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
-                    && node.path("generasjonId").asText() == behandlingId.toString()
+                    && node.path("generasjonId").asText() == generasjonId.toString()
                     && node.path("status").asText() == "LUKKET"
-                    && hendelseData.path("@event_name").asText() == "behandling_lukket"
+                    && hendelseData.path("@event_name").asText() == "generasjon_lukket"
         }
     }
 
     @Test
-    fun `behandling forkastet`() {
+    fun `generasjon forkastet`() {
         val vedtaksperiodeId = UUID.randomUUID()
         val kilde = UUID.randomUUID()
         val meldingsreferanseId = UUID.randomUUID()
-        val behandlingId = UUID.randomUUID()
+        val generasjonId = UUID.randomUUID()
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
 
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
-        hendelsefabrikk.sendBehandlingForkastet(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
+        hendelsefabrikk.sendGenerasjonOpprettet(vedtaksperiodeId, kilde, ORGN, generasjonId = generasjonId)
+        hendelsefabrikk.sendGenerasjonForkastet(vedtaksperiodeId, ORGN, meldingsreferanseId, generasjonId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -117,9 +117,9 @@ class E2ETest {
                     && node.path("yrkesaktivitetidentifikator").asText() == ORGN
                     && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
                     && node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
-                    && node.path("generasjonId").asText() == behandlingId.toString()
+                    && node.path("generasjonId").asText() == generasjonId.toString()
                     && node.path("status").asText() == "FORKASTET"
-                    && hendelseData.path("@event_name").asText() == "behandling_forkastet"
+                    && hendelseData.path("@event_name").asText() == "generasjon_forkastet"
         }
     }
 

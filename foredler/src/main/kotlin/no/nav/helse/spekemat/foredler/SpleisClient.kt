@@ -86,6 +86,7 @@ class SpleisClient(
         return PølseDto(
             vedtaksperiodeId = pølse.vedtaksperiodeId,
             generasjonId = pølse.generasjonId,
+            behandlingId = pølse.generasjonId,
             status = parseStatus(pølse.periodetilstand),
             kilde = pølse.kilde
         )

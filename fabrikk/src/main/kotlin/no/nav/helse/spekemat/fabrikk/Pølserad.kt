@@ -21,9 +21,9 @@ data class Pølserad(
         return this.copy(pølser = setOf(pølse) + pølser)
     }
 
-    fun oppdaterPølse(vedtaksperiodeId: UUID, generasjonId: UUID, status: Pølsestatus): Pølserad {
+    fun oppdaterPølse(vedtaksperiodeId: UUID, behandlingId: UUID, status: Pølsestatus): Pølserad {
         return this.copy(
-            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, generasjonId, status) }.toSet()
+            pølser = pølser.map { it.oppdaterPølse(vedtaksperiodeId, behandlingId, status) }.toSet()
         )
     }
     fun dto() = PølseradDto(pølser.map { it.dto() }, kildeTilRad)

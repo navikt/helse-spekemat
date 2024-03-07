@@ -39,7 +39,8 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
             ))
             val pølse = PølseDto(
                 vedtaksperiodeId = request.pølse.vedtaksperiodeId,
-                generasjonId = request.pølse.generasjonId,
+                generasjonId = checkNotNull(request.pølse.generasjonId ?: request.pølse.behandlingId),
+                behandlingId = checkNotNull(request.pølse.generasjonId ?: request.pølse.behandlingId),
                 status = Pølsestatus.ÅPEN,
                 kilde = request.pølse.kilde
             )
@@ -71,14 +72,14 @@ fun Route.api(pølsetjeneste: Pølsetjeneste) {
                     request.fnr,
                     request.yrkesaktivitetidentifikator,
                     request.vedtaksperiodeId,
-                    request.generasjonId,
+                    checkNotNull(request.generasjonId ?: request.behandlingId),
                     status,
                     request.meldingsreferanseId,
                     request.hendelsedata,
                     callId
                 )
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
-            } catch (err: OppdatererEldreGenerasjonException) {
+            } catch (err: OppdatererEldreBehandlingException) {
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag, men jeg tror du er litt out-of-order? Endringen er allerede hensyntatt 😚" }""" }
             } catch (err: TomPølsepakkeException) {
                 throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
@@ -110,20 +111,36 @@ data class NyPølseRequest(
 )
 data class NyPølseDto(
     val vedtaksperiodeId: UUID,
-    val generasjonId: UUID,
-    // tingen som gjorde at generasjonen ble opprettet
+    @Deprecated("", ReplaceWith("behandlingId"))
+    val generasjonId: UUID?,
+    val behandlingId: UUID?,
+    // tingen som gjorde at behandlingen ble opprettet
     val kilde: UUID
-)
+) {
+    init {
+        check(generasjonId != null || behandlingId != null) {
+            "Må ha enten generasjonId eller behandlingId"
+        }
+    }
+}
 enum class PølsestatusDto { ÅPEN, LUKKET, FORKASTET }
 data class OppdaterPølseRequest(
     val fnr: String,
     val yrkesaktivitetidentifikator: String,
     val vedtaksperiodeId: UUID,
-    val generasjonId: UUID,
+    @Deprecated("", ReplaceWith("behandlingId"))
+    val generasjonId: UUID?,
+    val behandlingId: UUID?,
     val status: PølsestatusDto,
     val meldingsreferanseId: UUID,
     val hendelsedata: String
-)
+) {
+    init {
+        check(generasjonId != null || behandlingId != null) {
+            "Må ha enten generasjonId eller behandlingId"
+        }
+    }
+}
 
 data class YrkesaktivitetDto(
     val yrkesaktivitetidentifikator: String,

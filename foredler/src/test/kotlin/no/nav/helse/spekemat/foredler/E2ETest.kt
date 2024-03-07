@@ -110,14 +110,14 @@ class E2ETest {
     @Test
     fun `oppdatering på eldre pølse`() = foredlerTestApp {
         val v1 = enVedtaksperiode()
-        val g1 = enGenerasjonId()
-        val g2 = enGenerasjonId()
+        val g1 = enBehandling()
+        val g2 = enBehandling()
 
-        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
+        sendNyPølseRequest(FNR, A1, v1, behandlingId = g1)
         sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
 
         val revurderinghendelse = UUID.randomUUID()
-        sendNyPølseRequest(FNR, A1, v1, generasjonId = g2, kildeId = revurderinghendelse)
+        sendNyPølseRequest(FNR, A1, v1, behandlingId = g2, kildeId = revurderinghendelse)
         sendOppdaterPølseRequest(FNR, A1, v1, g2, status = PølsestatusDto.LUKKET, hendelseId = revurderinghendelse)
 
         sendOppdaterPølseRequest(FNR, A1, v1, g1, PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.OK).also { response ->
@@ -151,15 +151,15 @@ class E2ETest {
     @Test
     fun `et forkastet vedtak`() = foredlerTestApp {
         val v1 = enVedtaksperiode()
-        val g1 = enGenerasjonId()
-        val g2 = enGenerasjonId()
+        val g1 = enBehandling()
+        val g2 = enBehandling()
 
-        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
+        sendNyPølseRequest(FNR, A1, v1, behandlingId = g1)
         sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
 
         // annullering
         val annulleringhendelse = UUID.randomUUID()
-        sendNyPølseRequest(FNR, A1, v1, generasjonId = g2, kildeId = annulleringhendelse)
+        sendNyPølseRequest(FNR, A1, v1, behandlingId = g2, kildeId = annulleringhendelse)
         sendOppdaterPølseRequest(FNR, A1, v1, g2, status = PølsestatusDto.FORKASTET, hendelseId = annulleringhendelse)
 
         sendHentPølserRequest(FNR).also { response ->
@@ -213,11 +213,11 @@ class E2ETest {
     fun `revurdering av førstegangsbehandling`() = foredlerTestApp{
         val v1 = enVedtaksperiode()
         val v2 = enVedtaksperiode()
-        val g1 = enGenerasjonId()
-        val g2 = enGenerasjonId()
+        val g1 = enBehandling()
+        val g2 = enBehandling()
 
-        sendNyPølseRequest(FNR, A1, v1, generasjonId = g1)
-        sendNyPølseRequest(FNR, A1, v2, generasjonId = g2)
+        sendNyPølseRequest(FNR, A1, v1, behandlingId = g1)
+        sendNyPølseRequest(FNR, A1, v2, behandlingId = g2)
         sendOppdaterPølseRequest(FNR, A1, v1, g1, status = PølsestatusDto.LUKKET) // vedtak fattet
         sendOppdaterPølseRequest(FNR, A1, v2, g2, status = PølsestatusDto.LUKKET) // vedtak fattet
 
@@ -260,7 +260,7 @@ class E2ETest {
 
         val v3 = UUID.fromString("82c4aa22-280b-4679-a702-379e43cf0f2d")
         val g3 = UUID.fromString("9458f7f3-d23c-48c0-a1f7-ab0ff0322d17")
-        sendOppdaterPølseRequest(FNR, A1, v3, generasjonId = g3, status = PølsestatusDto.LUKKET)
+        sendOppdaterPølseRequest(FNR, A1, v3, behandlingId = g3, status = PølsestatusDto.LUKKET)
 
         sendHentPølserRequest(FNR).also { response ->
             val result = response.body<PølserResponse>()
@@ -299,7 +299,7 @@ class E2ETest {
     }
 
     private fun enVedtaksperiode() = UUID.randomUUID()
-    private fun enGenerasjonId() = UUID.randomUUID()
+    private fun enBehandling() = UUID.randomUUID()
 
     private fun antallHistorikkinnslag(fnr: String) =
         sessionOf(dataSource.ds).use {
@@ -422,7 +422,7 @@ private class TestContext(
         vedtaksperiodeId: UUID = UUID.randomUUID(),
         hendelseId: UUID = UUID.randomUUID(),
         kildeId: UUID = UUID.randomUUID(),
-        generasjonId: UUID = UUID.randomUUID()
+        behandlingId: UUID = UUID.randomUUID()
     ): HttpResponse {
         return client.post("/api/pølse") {
             contentType(ContentType.Application.Json)
@@ -431,7 +431,8 @@ private class TestContext(
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
                 pølse = NyPølseDto(
                     vedtaksperiodeId = vedtaksperiodeId,
-                    generasjonId = generasjonId,
+                    generasjonId = behandlingId,
+                    behandlingId = behandlingId,
                     kilde = kildeId
                 ),
                 meldingsreferanseId = hendelseId,
@@ -445,7 +446,7 @@ private class TestContext(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         vedtaksperiodeId: UUID,
-        generasjonId: UUID,
+        behandlingId: UUID,
         status: PølsestatusDto,
         hendelseId: UUID = UUID.randomUUID(),
         forventetStatusCode: HttpStatusCode = HttpStatusCode.OK
@@ -456,7 +457,8 @@ private class TestContext(
                 fnr = fnr,
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
                 vedtaksperiodeId = vedtaksperiodeId,
-                generasjonId = generasjonId,
+                generasjonId = behandlingId,
+                behandlingId = behandlingId,
                 status = status,
                 meldingsreferanseId = hendelseId,
                 hendelsedata = "{}"
