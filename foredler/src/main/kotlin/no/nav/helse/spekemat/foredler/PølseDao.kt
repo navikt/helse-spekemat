@@ -160,7 +160,6 @@ class PølseDao(private val dataSource: DatasourceProvider) {
                 pølser = rad.pølser.map { pølse ->
                     PølseDto(
                         vedtaksperiodeId = pølse.vedtaksperiodeId,
-                        generasjonId = pølse.generasjonId,
                         behandlingId = pølse.generasjonId,
                         status = when (pølse.status) {
                             PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN -> Pølsestatus.ÅPEN

@@ -85,7 +85,6 @@ class SpleisClient(
     private fun mapPølse(pølse: SpleisPeriodeResponse): PølseDto {
         return PølseDto(
             vedtaksperiodeId = pølse.vedtaksperiodeId,
-            generasjonId = pølse.generasjonId,
             behandlingId = pølse.generasjonId,
             status = parseStatus(pølse.periodetilstand),
             kilde = pølse.kilde

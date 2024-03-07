@@ -431,7 +431,6 @@ private class TestContext(
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
                 pølse = NyPølseDto(
                     vedtaksperiodeId = vedtaksperiodeId,
-                    generasjonId = behandlingId,
                     behandlingId = behandlingId,
                     kilde = kildeId
                 ),
@@ -457,7 +456,6 @@ private class TestContext(
                 fnr = fnr,
                 yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
                 vedtaksperiodeId = vedtaksperiodeId,
-                generasjonId = behandlingId,
                 behandlingId = behandlingId,
                 status = status,
                 meldingsreferanseId = hendelseId,
