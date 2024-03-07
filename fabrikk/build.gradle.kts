@@ -17,7 +17,7 @@ configure<PublishingExtension> {
     }
     repositories {
         maven {
-            url = uri("https://maven.pkg.github.com/navikt/spekemat")
+            url = uri("https://maven.pkg.github.com/navikt/helse-spekemat")
             credentials {
                 username = "x-access-token"
                 password = System.getenv("GITHUB_PASSWORD")
