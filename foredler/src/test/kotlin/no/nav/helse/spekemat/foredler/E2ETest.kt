@@ -253,6 +253,11 @@ class E2ETest {
     }
 
     @Test
+    fun `metrics`() = foredlerTestApp {
+        assertTrue(this.client.get("/metrics") {  }.bodyAsText().isNotBlank())
+    }
+
+    @Test
     fun `migrerer person fra spleis`() = foredlerTestApp(Pølsetjenesten(dao, spleisClient, true)) {
         val testfil = this::class.java.classLoader.getResourceAsStream("spleispersoner/normal_muffins.json") ?: fail { "Klarte ikke å lese filen" }
         val normalMuffins = objectMapper.readValue<SpleisResponse>(testfil)

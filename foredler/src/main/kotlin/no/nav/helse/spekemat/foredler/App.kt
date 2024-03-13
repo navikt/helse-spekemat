@@ -24,6 +24,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
+import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
@@ -208,9 +209,9 @@ private fun Application.requestResponseTracing(logger: Logger) {
     }
 }
 
-private fun Application.nais(readyToggle: AtomicBoolean) {
+private fun Application.nais(readyToggle: AtomicBoolean, collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry) {
     install(MicrometerMetrics) {
-        registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
+        registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, collectorRegistry, Clock.SYSTEM)
         meterBinders = listOf(
             ClassLoaderMetrics(),
             JvmMemoryMetrics(),
@@ -233,7 +234,7 @@ private fun Application.nais(readyToggle: AtomicBoolean) {
         get(metricsEndpoint) {
             val names = call.request.queryParameters.getAll("name[]")?.toSet() ?: emptySet()
             val formatted = CharArrayWriter(1024)
-                .also { TextFormat.write004(it, CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(names)) }
+                .also { TextFormat.write004(it, collectorRegistry.filteredMetricFamilySamples(names)) }
                 .use { it.toString() }
 
             call.respondText(
