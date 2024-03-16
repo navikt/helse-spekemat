@@ -28,6 +28,7 @@ import io.ktor.server.testing.*
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.prometheus.client.CollectorRegistry
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.helse.spekemat.fabrikk.Pølsestatus.*
@@ -396,7 +397,7 @@ class E2ETest {
                 }
                 val migrateConfig = HikariConfig()
                 (dataSource.ds.hikariConfigMXBean as HikariConfig).copyStateTo(migrateConfig)
-                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste)
+                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste, CollectorRegistry())
             }
             startApplication()
 

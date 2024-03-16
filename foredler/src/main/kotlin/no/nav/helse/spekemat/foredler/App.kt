@@ -93,14 +93,14 @@ fun launchApp(env: Map<String, String>) {
             })
             module {
                 authentication { azureApp.konfigurerJwtAuth(this) }
-                lagApplikasjonsmodul(hikariConfig, objectmapper, pølsetjenesten)
+                lagApplikasjonsmodul(hikariConfig, objectmapper, pølsetjenesten, CollectorRegistry.defaultRegistry)
             }
         }
     )
     app.start(wait = true)
 }
 
-fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper: ObjectMapper, pølsetjeneste: Pølsetjeneste) {
+fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper: ObjectMapper, pølsetjeneste: Pølsetjeneste, collectorRegistry: CollectorRegistry) {
     val readyToggle = AtomicBoolean(false)
 
     environment.monitor.subscribe(ApplicationStarted) {
@@ -145,7 +145,7 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
         register(ContentType.Application.Json, JacksonConverter(objectMapper))
     }
     requestResponseTracing(LoggerFactory.getLogger("no.nav.helse.spekemat.foredler.api.Tracing"))
-    nais(readyToggle)
+    nais(readyToggle, collectorRegistry)
     routing {
         authenticate {
             api(pølsetjeneste)
@@ -209,7 +209,7 @@ private fun Application.requestResponseTracing(logger: Logger) {
     }
 }
 
-private fun Application.nais(readyToggle: AtomicBoolean, collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry) {
+private fun Application.nais(readyToggle: AtomicBoolean, collectorRegistry: CollectorRegistry) {
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, collectorRegistry, Clock.SYSTEM)
         meterBinders = listOf(
