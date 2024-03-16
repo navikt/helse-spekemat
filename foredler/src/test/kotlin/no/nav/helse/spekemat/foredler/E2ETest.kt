@@ -6,9 +6,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.github.navikt.tbd_libs.azure.AzureToken
-import com.github.navikt.tbd_libs.azure.AzureTokenProvider
-import com.github.navikt.tbd_libs.mock.MockHttpResponse
 import com.github.navikt.tbd_libs.test_support.CleanupStrategy
 import com.github.navikt.tbd_libs.test_support.DatabaseContainers
 import com.github.navikt.tbd_libs.test_support.TestDataSource
@@ -26,7 +23,6 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import io.mockk.clearMocks
-import io.mockk.every
 import io.mockk.mockk
 import io.prometheus.client.CollectorRegistry
 import kotliquery.queryOf
@@ -38,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.net.ServerSocket
 import java.time.Instant
-import java.time.LocalDateTime
 import java.util.*
 
 class E2ETest {
@@ -51,14 +46,7 @@ class E2ETest {
 
     private lateinit var dataSource: TestDataSource
     private val dao = PølseDao { dataSource.ds }
-    private val tokenProvider = object : AzureTokenProvider {
-        override fun bearerToken(scope: String) = AzureToken("a token", LocalDateTime.MAX)
-        override fun onBehalfOfToken(scope: String, token: String): AzureToken {
-            throw NotImplementedError("ikke implementert i mock")
-        }
-    }
     private val mockHttpClient = mockk<java.net.http.HttpClient>(relaxed = true)
-    private val spleisClient = SpleisClient(mockHttpClient, tokenProvider, "spleis-scope")
     private val objectMapper = jacksonObjectMapper()
         .registerModule(JavaTimeModule())
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -66,12 +54,6 @@ class E2ETest {
     @BeforeEach
     fun setup() {
         dataSource = databaseContainer.nyTilkobling()
-        mockSpleisResponse(listOf(
-            SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse(
-                organisasjonsnummer = A1,
-                generasjoner = emptyList()
-            )
-        ))
     }
 
     @AfterEach
@@ -258,52 +240,6 @@ class E2ETest {
         assertTrue(this.client.get("/metrics") {  }.bodyAsText().isNotBlank())
     }
 
-    @Test
-    fun `migrerer person fra spleis`() = foredlerTestApp(Pølsetjenesten(dao, spleisClient, true)) {
-        val testfil = this::class.java.classLoader.getResourceAsStream("spleispersoner/normal_muffins.json") ?: fail { "Klarte ikke å lese filen" }
-        val normalMuffins = objectMapper.readValue<SpleisResponse>(testfil)
-        mockSpleisResponse(normalMuffins.data.person.arbeidsgivere)
-
-        val v3 = UUID.fromString("82c4aa22-280b-4679-a702-379e43cf0f2d")
-        val g3 = UUID.fromString("9458f7f3-d23c-48c0-a1f7-ab0ff0322d17")
-        sendOppdaterPølseRequest(FNR, A1, v3, behandlingId = g3, status = PølsestatusDto.LUKKET)
-
-        sendHentPølserRequest(FNR).also { response ->
-            val result = response.body<PølserResponse>()
-            assertEquals(1, result.yrkesaktiviteter.size)
-
-            result.yrkesaktiviteter.single().also { ag ->
-                assertEquals(A1, ag.yrkesaktivitetidentifikator)
-                assertEquals(5, ag.rader.size)
-
-                ag.rader[0].also { rad ->
-                    assertEquals("9458f7f3-d23c-48c0-a1f7-ab0ff0322d17", rad.kildeTilRad.toString())
-                    assertEquals(5, rad.pølser.size)
-                }
-
-                ag.rader[1].also { rad ->
-                    assertEquals("9fd21855-b072-4f54-b5f1-cf1a6c660ad2", rad.kildeTilRad.toString())
-                    assertEquals(3, rad.pølser.size)
-                }
-
-                ag.rader[2].also { rad ->
-                    assertEquals("7f694a95-eb2b-4b4d-b49c-aff255d8fe9c", rad.kildeTilRad.toString())
-                    assertEquals(3, rad.pølser.size)
-                }
-
-                ag.rader[3].also { rad ->
-                    assertEquals("0e3ce01c-6d8e-4c64-b8e6-981ee2f0147b", rad.kildeTilRad.toString())
-                    assertEquals(3, rad.pølser.size)
-                }
-
-                ag.rader[4].also { rad ->
-                    assertEquals("5ac7d24c-1fed-4067-9ad0-0a590599bb03", rad.kildeTilRad.toString())
-                    assertEquals(2, rad.pølser.size)
-                }
-            }
-        }
-    }
-
     private fun enVedtaksperiode() = UUID.randomUUID()
     private fun enBehandling() = UUID.randomUUID()
 
@@ -363,20 +299,7 @@ class E2ETest {
         }
     }
 
-    private fun mockSpleisResponse(arbeidsgivere: List<SpleisResponse.SpleisPersonResponse.SpleisArbeidsgiverResponse>) {
-        val responseBody = objectMapper.writeValueAsString(SpleisResponse(
-            data = SpleisResponse.SpleisDataResponse(
-                person = SpleisResponse.SpleisPersonResponse(
-                    arbeidsgivere = arbeidsgivere
-                )
-            )
-        ))
-        every {
-            mockHttpClient.send<String>(any(), any())
-        } returns MockHttpResponse(responseBody, statusCode = 200)
-    }
-
-    private fun foredlerTestApp(pølsetjeneste: Pølsetjeneste = Pølsetjenesten(dao, spleisClient), testblokk: suspend TestContext.() -> Unit) {
+    private fun foredlerTestApp(pølsetjeneste: Pølsetjeneste = Pølsetjenesten(dao), testblokk: suspend TestContext.() -> Unit) {
         val randomPort = ServerSocket(0).localPort
         testApplication {
             environment {
@@ -397,7 +320,7 @@ class E2ETest {
                 }
                 val migrateConfig = HikariConfig()
                 (dataSource.ds.hikariConfigMXBean as HikariConfig).copyStateTo(migrateConfig)
-                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste, CollectorRegistry())
+                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste, true, CollectorRegistry())
             }
             startApplication()
 

@@ -26,8 +26,6 @@ fun main() {
             BehandlingOpprettetRiver(this, pølsetjeneste)
             BehandlingLukketRiver(this, pølsetjeneste)
             BehandlingForkastetRiver(this, pølsetjeneste)
-            AvstemmingRiver(this, pølsetjeneste)
-            MigreringRiver(this, pølsetjeneste)
         }
         .start()
 }

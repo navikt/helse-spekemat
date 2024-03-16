@@ -1,6 +1,5 @@
 package no.nav.helse.spekemat.foredler
 
-import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.fabrikk.Pølse
 import no.nav.helse.spekemat.fabrikk.PølseDto
 import no.nav.helse.spekemat.fabrikk.Pølsefabrikk
@@ -27,16 +26,11 @@ interface Pølsetjeneste {
         hendelsedata: String,
         callId: String
     )
-    fun opprettManglendePerson(fnr: String, callId: String)
     fun hent(fnr: String): List<YrkesaktivitetDto>
     fun slett(fnr: String)
 }
 
-class Pølsetjenesten(
-    private val dao: PølseDao,
-    private val spleisClient: SpleisClient,
-    private val migrerVedOpprettelse: Boolean = false
-) : Pølsetjeneste {
+class Pølsetjenesten(private val dao: PølseDao) : Pølsetjeneste {
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
@@ -50,7 +44,7 @@ class Pølsetjenesten(
         hendelsedata: String,
         callId: String
     ) {
-        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, callId) { fabrikk ->
+        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata) { fabrikk ->
             fabrikk.nyPølse(Pølse.fraDto(pølse))
             pølse
         }
@@ -66,24 +60,13 @@ class Pølsetjenesten(
         hendelsedata: String,
         callId: String
     ) {
-        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, callId) { fabrikk ->
+        hentPølsefabrikk(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata) { fabrikk ->
             fabrikk.oppdaterPølse(vedtaksperiodeId, behandlingId, status)
         }
     }
 
-    override fun opprettManglendePerson(fnr: String, callId: String) {
-        val oppretting = { spleisClient.hentSpeilJson(fnr, callId).also { result ->
-            "Opprettet ${result.size} pølsepakker for ${fnr.maskertFnr}".also {
-                logg.info(it, kv("callId", callId))
-                sikkerlogg.info(it, kv("fnr", fnr), kv("callId", callId))
-            }
-        } }
-        dao.opprettPerson(fnr, oppretting)
-    }
-
-    private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, meldingsreferanseId: UUID, hendelsedata: String, callId: String, behandling: (Pølsefabrikk) -> PølseDto) {
-        val oppretting = { if (migrerVedOpprettelse) spleisClient.hentSpeilJson(fnr, callId) else emptyList() }
-        dao.behandle(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, oppretting, behandling)
+    private fun hentPølsefabrikk(fnr: String, yrkesaktivitetidentifikator: String, meldingsreferanseId: UUID, hendelsedata: String, behandling: (Pølsefabrikk) -> PølseDto) {
+        dao.behandle(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, hendelsedata, behandling)
     }
 
     override fun hent(fnr: String): List<YrkesaktivitetDto> {

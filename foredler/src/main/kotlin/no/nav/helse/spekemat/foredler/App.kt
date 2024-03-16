@@ -4,7 +4,6 @@ import com.auth0.jwk.JwkProviderBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.github.navikt.tbd_libs.azure.createAzureTokenClientFromEnvironment
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.http.*
@@ -34,14 +33,14 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
-import net.logstash.logback.argument.StructuredArguments.*
+import net.logstash.logback.argument.StructuredArguments.keyValue
+import net.logstash.logback.argument.StructuredArguments.v
 import org.flywaydb.core.Flyway
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import java.io.CharArrayWriter
 import java.net.URI
-import java.net.http.HttpClient
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -60,6 +59,7 @@ fun main() {
 }
 
 fun launchApp(env: Map<String, String>) {
+    val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
     val azureApp = AzureApp(
         jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
         issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
@@ -74,15 +74,9 @@ fun launchApp(env: Map<String, String>) {
         initializationFailTimeout = Duration.ofMinutes(5).toMillis()
     }
 
-    val httpClient = HttpClient.newHttpClient()
-    val azure = createAzureTokenClientFromEnvironment(env)
-    val cluster = System.getenv("NAIS_CLUSTER_NAME")
-    val scope = "api://$cluster.tbd.spleis-api/.default"
-    val spleisClient = SpleisClient(httpClient, azure, scope)
-
     val dsProvider = StaticDataSource(hikariConfig)
     val dao = PølseDao(dsProvider)
-    val pølsetjenesten = Pølsetjenesten(dao, spleisClient, env["MIGRER_FRA_SPLEIS_VED_OPPRETTELSE"]?.toBoolean() ?: false)
+    val pølsetjenesten = Pølsetjenesten(dao)
 
     val app = embeddedServer(
         factory = CIO,
@@ -93,14 +87,14 @@ fun launchApp(env: Map<String, String>) {
             })
             module {
                 authentication { azureApp.konfigurerJwtAuth(this) }
-                lagApplikasjonsmodul(hikariConfig, objectmapper, pølsetjenesten, CollectorRegistry.defaultRegistry)
+                lagApplikasjonsmodul(hikariConfig, objectmapper, pølsetjenesten, erUtvikling, CollectorRegistry.defaultRegistry)
             }
         }
     )
     app.start(wait = true)
 }
 
-fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper: ObjectMapper, pølsetjeneste: Pølsetjeneste, collectorRegistry: CollectorRegistry) {
+fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper: ObjectMapper, pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean, collectorRegistry: CollectorRegistry) {
     val readyToggle = AtomicBoolean(false)
 
     environment.monitor.subscribe(ApplicationStarted) {
@@ -148,7 +142,7 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, objectMapper
     nais(readyToggle, collectorRegistry)
     routing {
         authenticate {
-            api(pølsetjeneste)
+            api(pølsetjeneste, erUtvikling)
         }
     }
 }

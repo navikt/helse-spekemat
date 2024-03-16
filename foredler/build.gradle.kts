@@ -24,8 +24,6 @@ dependencies {
     api("ch.qos.logback:logback-classic:$logbackClassicVersion")
     api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion")
 
-    api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
-
     api("io.ktor:ktor-server-cio:$ktorVersion")
     api("io.ktor:ktor-server-call-id:$ktorVersion")
     api("io.ktor:ktor-server-status-pages:$ktorVersion")
@@ -50,7 +48,6 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages-jvm:2.3.7")
 
     testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
-    testImplementation("com.github.navikt.tbd-libs:mock-http-client:$tbdLibsVersion")
     testImplementation("io.mockk:mockk:$mockKVersion")
 
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")

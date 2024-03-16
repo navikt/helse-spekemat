@@ -7,7 +7,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.retry.retryBlocking
 import net.logstash.logback.argument.StructuredArguments.kv
-import no.nav.helse.spekemat.slakter.PølsestatusDto.*
+import no.nav.helse.spekemat.slakter.PølsestatusDto.FORKASTET
+import no.nav.helse.spekemat.slakter.PølsestatusDto.LUKKET
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -25,7 +26,6 @@ interface Pølsetjeneste {
     fun behandlingLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun behandlingForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
     fun slett(fnr: String)
-    fun opprett(fnr: String)
 }
 
 class Pølsetjenesten(
@@ -41,10 +41,6 @@ class Pølsetjenesten(
     }
     override fun slett(fnr: String) {
         val request = lagSlettRequest(fnr)
-        sjekkOKResponseOgRetry(request)
-    }
-    override fun opprett(fnr: String) {
-        val request = lagOpprettRequest(fnr)
         sjekkOKResponseOgRetry(request)
     }
 
@@ -123,14 +119,6 @@ class Pølsetjenesten(
             | "fnr": "$fnr"
             |}""".trimMargin()
         return lagDELETERequest(URI("http://spekemat/api/person"), requestBody)
-    }
-
-    private fun lagOpprettRequest(fnr: String): HttpRequest {
-        @Language("JSON")
-        val requestBody = """{
-            | "fnr": "$fnr"
-            |}""".trimMargin()
-        return lagPOSTRequest(URI("http://spekemat/api/person"), requestBody)
     }
 
     private fun lagDELETERequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {

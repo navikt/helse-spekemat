@@ -34,9 +34,6 @@ spec:
       rules:
         - application: spekemat-slakter
         - application: spleis-api
-    outbound:
-      rules:
-        - application: spleis-api
   gcp:
     sqlInstances:
       - type: POSTGRES_15
@@ -47,6 +44,3 @@ spec:
             envVarPrefix: DATABASE
   ingresses:
     - {{ingress}}
-  env:
-    - name: MIGRER_FRA_SPLEIS_VED_OPPRETTELSE
-      value: "false"

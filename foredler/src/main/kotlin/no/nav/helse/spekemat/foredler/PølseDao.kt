@@ -32,27 +32,18 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.tilModellDto()).pakke())
     }
 
-    fun opprettPerson(fnr: String, oppretting: () -> List<YrkesaktivitetDto>) {
-        sessionOf(dataSource.getDataSource()).use {
-            it.transaction { session ->
-                session.hentEllerOpprettPerson(fnr, oppretting)
-            }
-        }
-    }
-
     fun behandle(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         meldingsreferanseId: UUID,
         hendelsedata: String,
-        oppretting: () -> List<YrkesaktivitetDto>,
         behandling: (Pølsefabrikk) -> PølseDto
     ) {
         sessionOf(dataSource.getDataSource()).use {
             it.transaction { session ->
                 if (session.hendelseHåndtertFør(meldingsreferanseId)) return logg.info("hendelsen {} er håndtert fra før", kv("meldingsreferanseId", meldingsreferanseId))
 
-                val personId = session.hentEllerOpprettPerson(fnr, oppretting)
+                val personId = session.hentEllerOpprettPerson(fnr)
 
                 val fabrikk = session.hentPølsepakke(personId, yrkesaktivitetidentifikator)?.let { personrad ->
                     Pølsefabrikk.gjenopprett(personrad.tilModellDto())
@@ -64,8 +55,8 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         }
     }
 
-    private fun TransactionalSession.hentEllerOpprettPerson(fnr: String, oppretting: () -> List<YrkesaktivitetDto>): Long {
-        return hentPersonOgLåsForBehandling(fnr) ?: opprettPerson(fnr, oppretting)
+    private fun TransactionalSession.hentEllerOpprettPerson(fnr: String): Long {
+        return hentPersonOgLåsForBehandling(fnr) ?: opprettPerson(fnr)
     }
 
     private fun hentPerson(fnr: String) =
@@ -119,13 +110,9 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         run(queryOf(HENT_PØLSEPAKKER, mapOf("fnr" to fnr)).map { rad ->
             rad.string("yrkesaktivitetidentifikator") to objectMapper.readValue<Personrad>(rad.string("data"))
         }.asList)
-    private fun TransactionalSession.opprettPerson(fnr: String, oppretting: () -> List<YrkesaktivitetDto>): Long {
+    private fun TransactionalSession.opprettPerson(fnr: String): Long {
         return checkNotNull(run(queryOf(OPPRETT_PERSON, mapOf("fnr" to fnr)).map { rad -> rad.long("id") }.asSingle)) {
             "Forventet å finne person eller opprette en ny"
-        }.also {  personId ->
-            oppretting()
-                .filter { it.rader.isNotEmpty() }
-                .forEach { lagre(personId, it.yrkesaktivitetidentifikator, it.rader, UKJENT_UUID, UUID.randomUUID(), "{}") }
         }
     }
 
@@ -191,7 +178,6 @@ class PølseDao(private val dataSource: DatasourceProvider) {
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val objectMapper = jacksonObjectMapper()
-        private val UKJENT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
 
         @Language("PostgreSQL")
         private const val HENT_PØLSEPAKKE_MED_LÅS = """SELECT data FROM polsepakke WHERE yrkesaktivitetidentifikator = :yid AND person_id = :pid FOR UPDATE;"""
