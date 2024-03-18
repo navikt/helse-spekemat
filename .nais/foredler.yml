@@ -16,6 +16,9 @@ spec:
     path: /isalive
   readiness:
     path: /isready
+  resources:
+    limits:
+      memory: 1024Mi
   prometheus:
     path: /metrics
     enabled: true
