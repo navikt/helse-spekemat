@@ -24,10 +24,6 @@ spec:
     enabled: true
   secureLogs:
     enabled: true
-  observability:
-    autoInstrumentation:
-      enabled: true
-      runtime: java
   azure:
     application:
       enabled: true
