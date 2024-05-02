@@ -33,6 +33,7 @@ spec:
       rules:
         - application: spekemat-slakter
         - application: spleis-api
+        - application: spoken
   gcp:
     sqlInstances:
       - type: POSTGRES_15
