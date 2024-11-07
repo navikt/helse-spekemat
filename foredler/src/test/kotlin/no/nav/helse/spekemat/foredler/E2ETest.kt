@@ -6,25 +6,22 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.navikt.tbd_libs.naisful.test.TestContext
+import com.github.navikt.tbd_libs.naisful.test.naisfulTestApp
 import com.github.navikt.tbd_libs.test_support.CleanupStrategy
 import com.github.navikt.tbd_libs.test_support.DatabaseContainers
 import com.github.navikt.tbd_libs.test_support.TestDataSource
 import com.zaxxer.hikari.HikariConfig
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import io.ktor.server.engine.*
-import io.ktor.server.testing.*
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.mockk.clearMocks
 import io.mockk.mockk
-import io.prometheus.client.CollectorRegistry
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import no.nav.helse.spekemat.fabrikk.Pølsestatus.*
@@ -32,7 +29,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.net.ServerSocket
 import java.time.Instant
 import java.util.*
 
@@ -70,14 +66,14 @@ class E2ETest {
         }
         val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        assertTrue(feilmelding.feilmelding.contains("Ugyldig request"))
+        assertTrue(feilmelding.detail!!.contains("Failed to convert request body"))
     }
 
     @Test
     fun `oppdatering på tom fabrikk`() = foredlerTestApp {
         sendOppdaterPølseRequest(FNR, A1, UUID.randomUUID(), UUID.randomUUID(), PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.NotFound).also { response ->
             val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
-            assertTrue(feilmelding.feilmelding.contains("Ingen registrert pølsepakke for vedkommende"))
+            assertTrue(feilmelding.detail!!.contains("Ingen registrert pølsepakke for vedkommende"))
         }
     }
 
@@ -86,7 +82,7 @@ class E2ETest {
         sendNyPølseRequest(FNR, A1)
         sendOppdaterPølseRequest(FNR, A1, UUID.randomUUID(), UUID.randomUUID(), PølsestatusDto.LUKKET, forventetStatusCode = HttpStatusCode.NotFound).also { response ->
             val feilmelding = objectMapper.readValue<FeilResponse>(response.bodyAsText())
-            assertTrue(feilmelding.feilmelding.contains("Ingen pølse registrert"))
+            assertTrue(feilmelding.detail!!.contains("Ingen pølse registrert"))
         }
     }
 
@@ -300,15 +296,8 @@ class E2ETest {
     }
 
     private fun foredlerTestApp(pølsetjeneste: Pølsetjeneste = Pølsetjenesten(dao), testblokk: suspend TestContext.() -> Unit) {
-        val randomPort = ServerSocket(0).localPort
-        testApplication {
-            environment {
-                connector {
-                    this.host = "localhost"
-                    this.port = randomPort
-                }
-            }
-            application {
+        naisfulTestApp(
+            testApplicationModule = {
                 authentication {
                     provider {
                         authenticate { context ->
@@ -320,99 +309,81 @@ class E2ETest {
                 }
                 val migrateConfig = HikariConfig()
                 (dataSource.ds.hikariConfigMXBean as HikariConfig).copyStateTo(migrateConfig)
-                lagApplikasjonsmodul(migrateConfig, objectMapper, pølsetjeneste, true, CollectorRegistry())
-            }
-            startApplication()
-
-            val client = createClient {
-                defaultRequest {
-                    port = randomPort
-                }
-                install(ContentNegotiation) {
-                    register(ContentType.Application.Json, JacksonConverter(objectMapper))
-                }
-            }
-            do {
-                val response = client.get("/isready")
-                println("Venter på at isready svarer OK…:${response.status}")
-            } while (!response.status.isSuccess())
-
-            testblokk(TestContext(client))
-        }
+                lagApplikasjonsmodul(migrateConfig, pølsetjeneste, true)
+            },
+            objectMapper = objectMapper,
+            meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+            testblokk = testblokk
+        )
     }
 }
-
-private class TestContext(
-    val client: HttpClient
-) {
-    suspend fun sendNyPølseRequest(
-        fnr: String,
-        yrkesaktivitetidentifikator: String,
-        vedtaksperiodeId: UUID = UUID.randomUUID(),
-        hendelseId: UUID = UUID.randomUUID(),
-        kildeId: UUID = UUID.randomUUID(),
-        behandlingId: UUID = UUID.randomUUID()
-    ): HttpResponse {
-        return client.post("/api/pølse") {
-            contentType(ContentType.Application.Json)
-            setBody(NyPølseRequest(
-                fnr = fnr,
-                yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
-                pølse = NyPølseDto(
-                    vedtaksperiodeId = vedtaksperiodeId,
-                    behandlingId = behandlingId,
-                    kilde = kildeId
-                ),
-                meldingsreferanseId = hendelseId,
-                hendelsedata = "{}"
-            ))
-        }.also {
-            assertTrue(it.status.isSuccess())
-        }
-    }
-    suspend fun sendOppdaterPølseRequest(
-        fnr: String,
-        yrkesaktivitetidentifikator: String,
-        vedtaksperiodeId: UUID,
-        behandlingId: UUID,
-        status: PølsestatusDto,
-        hendelseId: UUID = UUID.randomUUID(),
-        forventetStatusCode: HttpStatusCode = HttpStatusCode.OK
-    ): HttpResponse {
-        return client.patch("/api/pølse") {
-            contentType(ContentType.Application.Json)
-            setBody(OppdaterPølseRequest(
-                fnr = fnr,
-                yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
+suspend fun TestContext.sendNyPølseRequest(
+    fnr: String,
+    yrkesaktivitetidentifikator: String,
+    vedtaksperiodeId: UUID = UUID.randomUUID(),
+    hendelseId: UUID = UUID.randomUUID(),
+    kildeId: UUID = UUID.randomUUID(),
+    behandlingId: UUID = UUID.randomUUID()
+): HttpResponse {
+    return client.post("/api/pølse") {
+        contentType(ContentType.Application.Json)
+        setBody(NyPølseRequest(
+            fnr = fnr,
+            yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
+            pølse = NyPølseDto(
                 vedtaksperiodeId = vedtaksperiodeId,
                 behandlingId = behandlingId,
-                status = status,
-                meldingsreferanseId = hendelseId,
-                hendelsedata = "{}"
-            ))
-        }.also {
-            assertEquals(forventetStatusCode, it.status)
-        }
+                kilde = kildeId
+            ),
+            meldingsreferanseId = hendelseId,
+            hendelsedata = "{}"
+        ))
+    }.also {
+        assertTrue(it.status.isSuccess())
+    }
+}
+suspend fun TestContext.sendOppdaterPølseRequest(
+    fnr: String,
+    yrkesaktivitetidentifikator: String,
+    vedtaksperiodeId: UUID,
+    behandlingId: UUID,
+    status: PølsestatusDto,
+    hendelseId: UUID = UUID.randomUUID(),
+    forventetStatusCode: HttpStatusCode = HttpStatusCode.OK
+): HttpResponse {
+    return client.patch("/api/pølse") {
+        contentType(ContentType.Application.Json)
+        setBody(OppdaterPølseRequest(
+            fnr = fnr,
+            yrkesaktivitetidentifikator = yrkesaktivitetidentifikator,
+            vedtaksperiodeId = vedtaksperiodeId,
+            behandlingId = behandlingId,
+            status = status,
+            meldingsreferanseId = hendelseId,
+            hendelsedata = "{}"
+        ))
+    }.also {
+        assertEquals(forventetStatusCode, it.status)
+    }
+}
+
+suspend fun TestContext.sendHentPølserRequest(fnr: String) =
+    client.post("/api/pølser") {
+        contentType(ContentType.Application.Json)
+        setBody(PølserRequest(
+            fnr = fnr
+        ))
+    }.also {
+        assertTrue(it.status.isSuccess())
     }
 
-    suspend fun sendHentPølserRequest(fnr: String) =
-        client.post("/api/pølser") {
-            contentType(ContentType.Application.Json)
-            setBody(PølserRequest(
-                fnr = fnr
-            ))
-        }.also {
-            assertTrue(it.status.isSuccess())
-        }
-
-    suspend fun sendSlettRequest(fnr: String) =
-        client.delete("/api/person") {
-            contentType(ContentType.Application.Json)
-            setBody(SlettRequest(fnr))
-        }.also {
-            assertTrue(it.status.isSuccess())
-        }
-}
+suspend fun TestContext.sendSlettRequest(fnr: String) =
+    client.delete("/api/person") {
+        contentType(ContentType.Application.Json)
+        setBody(SlettRequest(fnr))
+    }.also {
+        assertTrue(it.status.isSuccess())
+    }
 
 private data class OkMeldingResponse(val melding: String)
 

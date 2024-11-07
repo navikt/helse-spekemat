@@ -10,7 +10,7 @@ fun feilhåndtering(logg: Logger, sikkerlogg: Logger, kodeblokk: () -> Unit) {
     } catch (err: IkkeFunnetException) {
         if (!erUtvikling) throw err
         // tillater at ting ikke finnes i dev
-        logg.info("Testpersonen / vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.feilmelding}", kv("callId", err.callId), err)
-        sikkerlogg.info("Testpersonen / vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.feilmelding}", kv("callId", err.callId), err)
+        logg.info("Testpersonen / vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.detail}", kv("callId", err.callId), err)
+        sikkerlogg.info("Testpersonen / vedtaksperioden finnes ikke: ${err.feilmeldingResponse?.detail}", kv("callId", err.callId), err)
     }
 }

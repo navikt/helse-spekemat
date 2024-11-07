@@ -1,7 +1,6 @@
 package no.nav.helse.spekemat.foredler
 
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
@@ -14,10 +13,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
     route("/api/person") {
         if (erUtvikling) {
             delete {
-                val request = call.receiveNullable<SlettRequest>() ?: return@delete call.respond(HttpStatusCode.BadRequest, FeilResponse(
-                    feilmelding = "Ugyldig request",
-                    callId = call.callId
-                ))
+                val request = call.receiveNullable<SlettRequest>() ?: throw BadRequestException("Ugyldig request")
                 pølsetjeneste.slett(request.fnr)
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
             }
@@ -26,10 +22,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
 
     route("/api/pølse") {
         post {
-            val request = call.receiveNullable<NyPølseRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-                feilmelding = "Ugyldig request",
-                callId = call.callId
-            ))
+            val request = call.receiveNullable<NyPølseRequest>() ?: throw BadRequestException("Ugyldig request")
             val pølse = PølseDto(
                 vedtaksperiodeId = request.pølse.vedtaksperiodeId,
                 behandlingId = request.pølse.behandlingId,
@@ -49,10 +42,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
         }
 
         patch {
-            val request = call.receiveNullable<OppdaterPølseRequest>() ?: return@patch call.respond(HttpStatusCode.BadRequest, FeilResponse(
-                feilmelding = "Ugyldig request",
-                callId = call.callId
-            ))
+            val request = call.receiveNullable<OppdaterPølseRequest>() ?: throw BadRequestException("Ugyldig request")
             val status = when (request.status) {
                 PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
                 PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
@@ -71,7 +61,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
                     callId
                 )
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
-            } catch (err: OppdatererEldreBehandlingException) {
+            } catch (_: OppdatererEldreBehandlingException) {
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag, men jeg tror du er litt out-of-order? Endringen er allerede hensyntatt 😚" }""" }
             } catch (err: TomPølsepakkeException) {
                 throw NotFoundException("Ingen registrert pølsepakke for vedkommende: ${err.message}")
@@ -82,10 +72,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
     }
 
     post("/api/pølser") {
-        val request = call.receiveNullable<PølserRequest>() ?: return@post call.respond(HttpStatusCode.BadRequest, FeilResponse(
-            feilmelding = "Ugyldig request",
-            callId = call.callId
-        ))
+        val request = call.receiveNullable<PølserRequest>() ?: throw BadRequestException("Ugyldig request")
         call.respond(HttpStatusCode.OK, PølserResponse(pølsetjeneste.hent(request.fnr)))
     }
 }

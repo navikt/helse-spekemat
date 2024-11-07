@@ -5,11 +5,13 @@ import com.github.navikt.tbd_libs.azure.AzureToken
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.mock.MockHttpResponse
 import com.github.navikt.tbd_libs.mock.bodyAsString
+import com.github.navikt.tbd_libs.rapids_and_rivers.test_support.TestRapid
+import com.github.navikt.tbd_libs.result_object.Result
+import com.github.navikt.tbd_libs.result_object.ok
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import no.nav.helse.rapids_rivers.testsupport.TestRapid
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.net.http.HttpClient
@@ -25,8 +27,8 @@ class E2ETest {
     }
 
     private val azureTokenProvider = object : AzureTokenProvider {
-        override fun bearerToken(scope: String) = AzureToken("liksom-token", LocalDateTime.MAX)
-        override fun onBehalfOfToken(scope: String, token: String): AzureToken {
+        override fun bearerToken(scope: String) = AzureToken("liksom-token", LocalDateTime.MAX).ok()
+        override fun onBehalfOfToken(scope: String, token: String): Result<AzureToken> {
             throw NotImplementedError("ikke implementert i mock")
         }
     }

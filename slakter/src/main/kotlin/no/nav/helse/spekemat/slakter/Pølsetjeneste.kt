@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
+import com.github.navikt.tbd_libs.result_object.getOrThrow
 import com.github.navikt.tbd_libs.retry.retryBlocking
 import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.helse.spekemat.slakter.PølsestatusDto.FORKASTET
@@ -136,7 +137,7 @@ class Pølsetjenesten(
     private fun lagRequest(uri: URI, method: String, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
         sikkerlogg.info("sender $method til <$uri> med {} og body:\n$body", kv("callId", callId))
         return HttpRequest.newBuilder(uri)
-            .header("Authorization", "Bearer ${azure.bearerToken(scope).token}")
+            .header("Authorization", "Bearer ${azure.bearerToken(scope).getOrThrow().token}")
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
             .header(CALL_ID_HEADER, "$callId")
@@ -167,7 +168,10 @@ class Pølsetjenesten(
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class FeilmeldingResponse(
-    val feilmelding: String,
+    val type: URI,
+    val title: String,
+    val status: Int,
+    val detail: String?,
     val callId: String?
 )
 class IkkeFunnetException(override val message: String?, val callId: String, val feilmeldingResponse: FeilmeldingResponse?) : RuntimeException()
