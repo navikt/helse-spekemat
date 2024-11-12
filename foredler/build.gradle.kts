@@ -1,8 +1,8 @@
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 
-val tbdLibsVersion = "2024.11.12-11.09-16cf2599"
-val logbackClassicVersion = "1.4.14"
-val logbackEncoderVersion = "7.4"
+val tbdLibsVersion = "2024.11.12-20.46-e1fd6a25"
+val logbackClassicVersion = "1.5.12"
+val logbackEncoderVersion = "8.0"
 val jacksonVersion = "2.18.1"
 val ktorVersion = "3.0.1"
 val flywayCoreVersion = "10.8.1"
