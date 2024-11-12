@@ -1,4 +1,3 @@
-val gradleversjon = "8.10.2"
 val junitJupiterVersion = "5.10.2"
 
 plugins {
