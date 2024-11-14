@@ -24,8 +24,8 @@ internal class BehandlingLukketRiver(
 
     init {
         River(rapidsConnection).apply {
+            precondition { it.requireValue("@event_name", "behandling_lukket") }
             validate {
-                it.demandValue("@event_name", "behandling_lukket")
                 it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "behandlingId")
                 it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
             }
