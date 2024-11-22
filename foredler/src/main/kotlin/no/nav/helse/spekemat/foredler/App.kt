@@ -8,6 +8,8 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.request.header
 import io.ktor.server.routing.*
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
@@ -54,6 +56,17 @@ fun launchApp(env: Map<String, String>) {
         objectMapper = objectmapper,
         applicationLogger = logg,
         callLogger = LoggerFactory.getLogger("no.nav.helse.spekemat.foredler.api.CallLogging"),
+        timersConfig = { call, _ ->
+            this
+                .tag("azp_name", call.principal<JWTPrincipal>()?.get("azp_name") ?: "n/a")
+                // https://github.com/linkerd/polixy/blob/main/DESIGN.md#l5d-client-id-client-id
+                // eksempel: <APP>.<NAMESPACE>.serviceaccount.identity.linkerd.cluster.local
+                .tag("konsument", call.request.header("L5d-Client-Id") ?: "n/a")
+        },
+        mdcEntries = mapOf(
+            "azp_name" to { call: ApplicationCall -> call.principal<JWTPrincipal>()?.get("azp_name") },
+            "konsument" to { call: ApplicationCall -> call.request.header("L5d-Client-Id") }
+        ),
         applicationModule = {
             authentication { azureApp.konfigurerJwtAuth(this) }
             lagApplikasjonsmodul(hikariConfig, pølsetjenesten, erUtvikling)
