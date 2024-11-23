@@ -16,6 +16,7 @@ spec:
     path: /isalive
   readiness:
     path: /isready
+    periodSeconds: 1
   resources:
     limits:
       memory: 1024Mi
