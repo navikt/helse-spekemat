@@ -37,7 +37,7 @@ spec:
         - application: spoken
   gcp:
     sqlInstances:
-      - type: POSTGRES_15
+      - type: POSTGRES_17
         tier: {{databaseTier}}
         diskAutoresize: true
         databases:
