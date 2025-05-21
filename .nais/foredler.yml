@@ -45,3 +45,8 @@ spec:
             envVarPrefix: DATABASE
   ingresses:
     - {{ingress}}
+  observability:
+    logging:
+      destinations:
+        - id: elastic
+
