@@ -1,10 +1,10 @@
 import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
 
-val tbdLibsVersion = "2025.03.27-18.30-c228796d"
+val tbdLibsVersion = "2025.08.07-09.55-15719a86"
 val logbackClassicVersion = "1.5.12"
 val logbackEncoderVersion = "8.0"
 val jacksonVersion = "2.18.3"
-val ktorVersion = "3.1.2"
+val ktorVersion = "3.2.3"
 val flywayCoreVersion = "11.5.0"
 val hikariCPVersion = "6.3.0"
 val postgresqlVersion = "42.7.5"
