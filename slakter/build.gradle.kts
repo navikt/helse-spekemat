@@ -1,5 +1,5 @@
 val rapidsAndRiversVersion = "2025080710011754553680.051be9b54ef9"
-val tbdLibsVersion = "2025.08.07-09.55-15719a86"
+val tbdLibsVersion = "2025.08.16-09.21-71db7cad"
 val mockkVersion = "1.13.17"
 
 dependencies {
