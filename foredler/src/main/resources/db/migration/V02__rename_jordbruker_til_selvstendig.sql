@@ -1,8 +1,11 @@
 DELETE
-FROM polsepakke
-WHERE person_id IN (SELECT person_id FROM polsepakke WHERE yrkesaktivitetidentifikator = 'JORDBRUKER')
-  AND person_id IN (SELECT person_id FROM polsepakke WHERE yrkesaktivitetidentifikator = 'SELVSTENDIG')
-  AND yrkesaktivitetidentifikator = 'JORDBRUKER';
+FROM polsepakke p
+WHERE p.yrkesaktivitetidentifikator = 'JORDBRUKER'
+  AND EXISTS (
+    SELECT 1 FROM polsepakke p2
+    WHERE p2.person_id = p.person_id
+      AND p2.yrkesaktivitetidentifikator = 'SELVSTENDIG'
+);
 
 UPDATE polsepakke
 SET yrkesaktivitetidentifikator = 'SELVSTENDIG'

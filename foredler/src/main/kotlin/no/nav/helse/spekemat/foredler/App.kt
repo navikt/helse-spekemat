@@ -24,8 +24,8 @@ private val objectmapper = jacksonObjectMapper().registerModules(JavaTimeModule(
 
 fun main() {
     Thread.currentThread().setUncaughtExceptionHandler { _, e ->
-        logg.error("Ufanget exception: {}", e.message, e)
-        sikkerlogg.error("Ufanget exception: {}", e.message, e)
+        logg.error("Exception på frifot: {}", e.message, e)
+        sikkerlogg.error("Exception på frifot: {}", e.message, e)
     }
 
     launchApp(System.getenv())
