@@ -14,11 +14,11 @@ spec:
     max: 12
   liveness:
     path: /isalive
-    initialDelay: 5
+    initialDelay: 300
   readiness:
     path: /isready
-    initialDelay: 5
-    periodSeconds: 1
+    initialDelay: 300
+    periodSeconds: 300
   resources:
     limits:
       memory: 1024Mi
