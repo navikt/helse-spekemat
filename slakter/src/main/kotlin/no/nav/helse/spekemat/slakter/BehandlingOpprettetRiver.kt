@@ -27,7 +27,7 @@ internal class BehandlingOpprettetRiver(
             precondition { it.requireValue("@event_name", "behandling_opprettet") }
             validate {
                 it.requireKey("@id", "fødselsnummer", "kilde.meldingsreferanseId", "vedtaksperiodeId", "behandlingId")
-                it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
+                it.validerYrkesaktivitetidentifikator()
             }
         }.register(this)
     }
@@ -47,7 +47,7 @@ internal class BehandlingOpprettetRiver(
 
         val meldingsreferanseId = packet["@id"].asUUID()
         val fnr = packet["fødselsnummer"].asText()
-        val yrkesaktivitetidentifikator = packet["organisasjonsnummer"].asText()
+        val yrkesaktivitetidentifikator = packet.yrkesaktivitetidentifikator()
 
         logg.info("Håndterer behandling_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))
         sikkerlogg.info("Håndterer behandling_opprettet {}", kv("meldingsreferanseId", meldingsreferanseId))

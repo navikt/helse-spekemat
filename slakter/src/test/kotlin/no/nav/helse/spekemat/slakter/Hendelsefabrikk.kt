@@ -8,41 +8,49 @@ internal class Hendelsefabrikk(
     private val rapidsConnection: TestRapid,
     private val fnr: String
 ) {
-    fun sendBehandlingOpprettet(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagBehandlingOpprettet(meldingsreferanseId, vedtaksperiodeId, kilde, orgnr, behandlingId))
+    fun sendBehandlingOpprettetArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+        rapidsConnection.sendTestMessage(lagBehandlingOpprettetArbeidstaker(meldingsreferanseId, vedtaksperiodeId, kilde, orgnr, behandlingId))
     }
-    fun sendBehandlingLukket(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagBehandlingLukket(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
+
+    fun sendBehandlingOpprettetSelvstendig(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+        rapidsConnection.sendTestMessage(lagBehandlingOpprettetSelvstendig(meldingsreferanseId, vedtaksperiodeId, kilde, behandlingId))
     }
-    fun sendBehandlingForkastet(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
-        rapidsConnection.sendTestMessage(lagBehandlingForkastet(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
+
+    fun sendBehandlingLukketArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+        rapidsConnection.sendTestMessage(lagBehandlingLukketArbeidstaker(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
+    }
+    fun sendBehandlingForkastetArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+        rapidsConnection.sendTestMessage(lagBehandlingForkastetArbeidstaker(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
     }
     @Language("JSON")
-    fun lagBehandlingOpprettet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingOpprettetArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "behandling_opprettet",
         |  "@id": "$meldingsreferanseId",
         |  "kilde": {
         |    "meldingsreferanseId": "$kilde"
         |  },
         |  "fødselsnummer": "$fnr",
+        |  "yrkesaktivitetstype": "ARBEIDSTAKER",
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
         |}""".trimMargin()
     @Language("JSON")
-    fun lagBehandlingLukket(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingLukketArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "behandling_lukket",
         |  "@id": "$meldingsreferanseId",
         |  "fødselsnummer": "$fnr",
+        |  "yrkesaktivitetstype": "ARBEIDSTAKER",
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
         |}""".trimMargin()
     @Language("JSON")
-    fun lagBehandlingForkastet(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingForkastetArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
         |  "@event_name": "behandling_forkastet",
         |  "@id": "$meldingsreferanseId",
         |  "fødselsnummer": "$fnr",
+        |  "yrkesaktivitetstype": "ARBEIDSTAKER",
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
@@ -56,5 +64,18 @@ internal class Hendelsefabrikk(
         |  "@event_name": "slett_person",
         |  "@id": "${UUID.randomUUID()}",
         |  "fødselsnummer": "$fnr"
+        |}""".trimMargin()
+
+    @Language("JSON")
+    fun lagBehandlingOpprettetSelvstendig(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, behandlingId: UUID = UUID.randomUUID()) = """{
+        |  "@event_name": "behandling_opprettet",
+        |  "@id": "$meldingsreferanseId",
+        |  "kilde": {
+        |    "meldingsreferanseId": "$kilde"
+        |  },
+        |  "fødselsnummer": "$fnr",
+        |  "yrkesaktivitetstype": "SELVSTENDIG",
+        |  "vedtaksperiodeId": "$vedtaksperiodeId",
+        |  "behandlingId": "$behandlingId"
         |}""".trimMargin()
 }

@@ -54,7 +54,7 @@ class E2ETest {
         val meldingsreferanseId = UUID.randomUUID()
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
+        hendelsefabrikk.sendBehandlingOpprettetArbeidstaker(vedtaksperiodeId, kilde, ORGN, meldingsreferanseId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -71,6 +71,31 @@ class E2ETest {
         }
     }
 
+
+    @Test
+    fun `behandling opprettet selvstendig`() {
+        val vedtaksperiodeId = UUID.randomUUID()
+        val kilde = UUID.randomUUID()
+        val meldingsreferanseId = UUID.randomUUID()
+
+        mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
+        hendelsefabrikk.sendBehandlingOpprettetSelvstendig(vedtaksperiodeId, kilde, meldingsreferanseId)
+
+        verifiserRequest(httpClientMock) { request ->
+            val node = objectMapper.readTree(request.bodyAsString())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+
+            request.method() == "POST"
+                && node.path("fnr").asText() == FNR
+                && node.path("yrkesaktivitetidentifikator").asText() == "SELVSTENDIG"
+                && node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString()
+                && node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString()
+                && node.path("pølse").path("kilde").asText() == kilde.toString()
+                && node.path("pølse").hasNonNull("behandlingId")
+                && hendelseData.path("@event_name").asText() == "behandling_opprettet"
+        }
+    }
+
     @Test
     fun `behandling lukket`() {
         val vedtaksperiodeId = UUID.randomUUID()
@@ -80,8 +105,8 @@ class E2ETest {
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
 
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
-        hendelsefabrikk.sendBehandlingLukket(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
+        hendelsefabrikk.sendBehandlingOpprettetArbeidstaker(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
+        hendelsefabrikk.sendBehandlingLukketArbeidstaker(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
@@ -107,8 +132,8 @@ class E2ETest {
 
         mockResponse("OK", 200, mapOf("callId" to UUID.randomUUID().toString()))
 
-        hendelsefabrikk.sendBehandlingOpprettet(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
-        hendelsefabrikk.sendBehandlingForkastet(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
+        hendelsefabrikk.sendBehandlingOpprettetArbeidstaker(vedtaksperiodeId, kilde, ORGN, behandlingId = behandlingId)
+        hendelsefabrikk.sendBehandlingForkastetArbeidstaker(vedtaksperiodeId, ORGN, meldingsreferanseId, behandlingId)
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())

@@ -27,7 +27,7 @@ internal class BehandlingLukketRiver(
             precondition { it.requireValue("@event_name", "behandling_lukket") }
             validate {
                 it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "behandlingId")
-                it.requireKey("organisasjonsnummer") // a.k.a. yrkesaktivitetidentifikator
+                it.validerYrkesaktivitetidentifikator()
             }
         }.register(this)
     }
@@ -43,7 +43,7 @@ internal class BehandlingLukketRiver(
 
         val meldingsreferanseId = packet["@id"].asUUID()
         val fnr = packet["fødselsnummer"].asText()
-        val yrkesaktivitetidentifikator = packet["organisasjonsnummer"].asText()
+        val yrkesaktivitetidentifikator = packet.yrkesaktivitetidentifikator()
 
         logg.info("Håndterer behandling_lukket {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("behandlingId", behandlingId))
         sikkerlogg.info("Håndterer behandling_lukket {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("behandlingId", behandlingId))
