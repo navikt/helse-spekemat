@@ -13,6 +13,7 @@ on:
       - '.nais/foredler.yml'
       - '.nais/foredler-dev.json'
       - '.nais/foredler-prod.json'
+      - 'Dockerfile'
 
 jobs:
   build:

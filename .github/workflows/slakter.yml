@@ -12,6 +12,7 @@ on:
       - '.nais/slakter.yml'
       - '.nais/slakter-dev.json'
       - '.nais/slakter-prod.json'
+      - 'Dockerfile'
 
 jobs:
   build:
