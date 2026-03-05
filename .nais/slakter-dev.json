@@ -1,4 +1,5 @@
 {
   "kafkaPool": "nav-dev",
-  "consumerGroupId": "tbd-spekemat-v1"
+  "consumerGroupId": "tbd-spekemat-v1",
+  "tenant" : "trygdeetaten.no"
 }
