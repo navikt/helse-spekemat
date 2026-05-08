@@ -10,9 +10,6 @@ on:
       - 'settings.gradle.kts'
       - '.github/workflows/fabrikk.yml'
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   build:
     name: build
@@ -29,6 +26,8 @@ jobs:
           cache: 'gradle'
       - name: gradle
         run: ./gradlew :fabrikk:build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Genererer versjon
         run: |
           TIME=$(TZ="Europe/Oslo" date +%Y.%m.%d-%H.%M)
