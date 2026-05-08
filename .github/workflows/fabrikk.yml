@@ -37,4 +37,4 @@ jobs:
       - name: upload artifacts
         run: ./gradlew :fabrikk:publish -Pversion="$(echo $VERSION)"
         env:
-          GITHUB_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
