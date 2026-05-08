@@ -13,6 +13,9 @@ on:
       - '.nais/slakter-dev.json'
       - '.nais/slakter-prod.json'
       - 'Dockerfile'
+  schedule:
+    - cron: '0 3 * * 3'
+      timezone: 'Europe/Oslo'
 
 jobs:
   build:

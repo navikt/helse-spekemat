@@ -9,6 +9,9 @@ on:
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
       - '.github/workflows/fabrikk.yml'
+  schedule:
+    - cron: '0 3 * * 3'
+      timezone: 'Europe/Oslo'
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
