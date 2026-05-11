@@ -50,6 +50,9 @@ spec:
   ingresses:
     - {{ingress}}
   observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
     logging:
       destinations:
         - id: elastic
