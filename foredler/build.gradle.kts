@@ -42,7 +42,7 @@ dependencies {
 }
 
 tasks {
-    withType<Jar>() {
+    withType<Jar> {
         finalizedBy(":foredler:remove_db_container")
     }
 
@@ -54,7 +54,8 @@ tasks {
     }
 }
 
-tasks.create("remove_db_container", DockerRemoveContainer::class) {
+tasks.register("remove_db_container", DockerRemoveContainer::class) {
+    description = "Fjerner test-containere"
     targetContainerId("spekemat")
     dependsOn(":foredler:test")
     setProperty("force", true)
