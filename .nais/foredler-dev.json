@@ -1,5 +1,6 @@
 {
   "ingress": "https://spekemat.intern.dev.nav.no",
   "databaseTier": "db-f1-micro",
-  "tenant" : "trygdeetaten.no"
+  "tenant" : "trygdeetaten.no",
+  "pgAudit": "off"
 }
