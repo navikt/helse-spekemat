@@ -18,7 +18,7 @@ tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azu
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
 tbd-libs-retry = { module = "com.github.navikt.tbd-libs:retry", version.ref = "tbd-libs" }
 
-mockk = "io.mockk:mockk:1.13.17"
+mockk = "io.mockk:mockk:1.14.11"
 tbd-libs-mock-http-client = { module = "com.github.navikt.tbd-libs:mock-http-client", version.ref = "tbd-libs" }
 tbd-libs-naisful-test-app = { module = "com.github.navikt.tbd-libs:naisful-test-app", version.ref = "tbd-libs" }
 tbd-libs-postgres-testdatabaser = { module = "com.github.navikt.tbd-libs:postgres-testdatabaser", version.ref = "tbd-libs" }
