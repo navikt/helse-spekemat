@@ -1,6 +1,6 @@
 [versions]
 sasGradlePlugins = "20260923.0907"
-tbd-libs = "2026.01.22-09.16-1d3f6039"
+tbd-libs = "20260917.2152"
 
 [libraries]
 flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:11.5.0"
