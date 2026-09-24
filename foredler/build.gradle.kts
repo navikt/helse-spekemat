@@ -1,66 +1,34 @@
-import com.bmuschko.gradle.docker.tasks.container.DockerRemoveContainer
-
-val tbdLibsVersion = "2026.01.22-09.16-1d3f6039"
-val logbackClassicVersion = "1.5.25"
-val logbackEncoderVersion = "8.0"
-val jacksonVersion = "2.18.3"
-val ktorVersion = "3.2.3"
-val flywayCoreVersion = "11.5.0"
-val hikariCPVersion = "6.3.0"
-val postgresqlVersion = "42.7.7"
-val kotliqueryVersion = "1.9.0"
-val mockKVersion = "1.13.17"
-
 plugins {
-    id("com.bmuschko.docker-remote-api") version "9.4.0"
+    id("no.nav.helse.sas.sas-deployable")
+}
+
+sasDeployable {
+    mainClass = "no.nav.helse.spekemat.foredler.AppKt"
+    imageName = "${rootProject.name}-foredler"
 }
 
 dependencies {
-    api(project(":fabrikk"))
+    implementation(project(":fabrikk"))
 
-    implementation("com.github.navikt.tbd-libs:naisful-app:$tbdLibsVersion")
+    implementation(libs.tbd.libs.naisful.app)
 
-    api("ch.qos.logback:logback-classic:$logbackClassicVersion")
-    api("net.logstash.logback:logstash-logback-encoder:$logbackEncoderVersion")
+    implementation(libs.logback.classic)
+    implementation(libs.logstash.logback.encoder)
 
-    api("io.ktor:ktor-server-auth:$ktorVersion")
-    api("io.ktor:ktor-server-auth-jwt:$ktorVersion") {
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt) {
         exclude(group = "junit")
     }
 
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    api("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.datatype.jsr310)
 
-    api("org.flywaydb:flyway-database-postgresql:$flywayCoreVersion")
-    implementation("com.zaxxer:HikariCP:$hikariCPVersion")
-    implementation("org.postgresql:postgresql:$postgresqlVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation(libs.flyway.database.postgresql)
+    implementation(libs.hikaricp)
+    implementation(libs.postgresql)
+    implementation(libs.kotliquery)
 
-    testImplementation("com.github.navikt.tbd-libs:naisful-test-app:$tbdLibsVersion")
-    testImplementation("com.github.navikt.tbd-libs:postgres-testdatabaser:$tbdLibsVersion")
-    testImplementation("io.mockk:mockk:$mockKVersion")
-}
-
-tasks {
-    withType<Jar> {
-        finalizedBy(":foredler:remove_db_container")
-    }
-
-    withType<Test> {
-        systemProperty("junit.jupiter.execution.parallel.enabled", "true")
-        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
-        systemProperty("junit.jupiter.execution.parallel.config.strategy", "fixed")
-        systemProperty("junit.jupiter.execution.parallel.config.fixed.parallelism", "4")
-    }
-}
-
-tasks.register("remove_db_container", DockerRemoveContainer::class) {
-    description = "Fjerner test-containere"
-    targetContainerId("spekemat")
-    dependsOn(":foredler:test")
-    setProperty("force", true)
-    onError {
-        if (!this.message!!.contains("No such container"))
-            throw this
-    }
+    testImplementation(libs.tbd.libs.naisful.test.app)
+    testImplementation(libs.tbd.libs.postgres.testdatabaser)
+    testImplementation(libs.mockk)
 }

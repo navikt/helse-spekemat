@@ -1,13 +1,18 @@
-val rapidsAndRiversVersion = "2026011411051768385145.e8ebad1177b4"
-val tbdLibsVersion = "2026.01.22-09.16-1d3f6039"
-val mockkVersion = "1.13.17"
+plugins {
+    id("no.nav.helse.sas.sas-deployable")
+}
+
+sasDeployable {
+    mainClass = "no.nav.helse.spekemat.slakter.AppKt"
+    imageName = "${rootProject.name}-slakter"
+}
 
 dependencies {
-    api("com.github.navikt:rapids-and-rivers:$rapidsAndRiversVersion")
-    api("com.github.navikt.tbd-libs:azure-token-client-default:$tbdLibsVersion")
-    api("com.github.navikt.tbd-libs:retry:$tbdLibsVersion")
+    implementation(libs.rapids.and.rivers)
+    implementation(libs.tbd.libs.azure.token.client.default)
+    implementation(libs.tbd.libs.retry)
 
-    testImplementation("com.github.navikt.tbd-libs:rapids-and-rivers-test:$tbdLibsVersion")
-    testImplementation("com.github.navikt.tbd-libs:mock-http-client:$tbdLibsVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation(libs.tbd.libs.rapids.and.rivers.test)
+    testImplementation(libs.tbd.libs.mock.http.client)
+    testImplementation(libs.mockk)
 }
