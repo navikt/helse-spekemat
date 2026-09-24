@@ -4,7 +4,12 @@ import net.logstash.logback.argument.StructuredArguments.kv
 import org.slf4j.Logger
 
 private val erUtvikling = System.getenv("NAIS_CLUSTER_NAME") == "dev-gcp"
-fun feilhåndtering(logg: Logger, sikkerlogg: Logger, kodeblokk: () -> Unit) {
+
+fun feilhåndtering(
+    logg: Logger,
+    sikkerlogg: Logger,
+    kodeblokk: () -> Unit,
+) {
     try {
         kodeblokk()
     } catch (err: IkkeFunnetException) {

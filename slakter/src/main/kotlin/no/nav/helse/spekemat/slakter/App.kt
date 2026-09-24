@@ -19,13 +19,13 @@ fun main() {
 
     val erUtvikling = cluster == "dev-gcp"
 
-    RapidApplication.create(env)
+    RapidApplication
+        .create(env)
         .apply {
             logg.info("Hei, er verden klar for pølser?")
             if (erUtvikling) SlettPersonRiver(this, pølsetjeneste)
             BehandlingOpprettetRiver(this, pølsetjeneste)
             BehandlingLukketRiver(this, pølsetjeneste)
             BehandlingForkastetRiver(this, pølsetjeneste)
-        }
-        .start()
+        }.start()
 }

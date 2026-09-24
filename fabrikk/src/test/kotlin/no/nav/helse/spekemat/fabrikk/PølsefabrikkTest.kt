@@ -7,7 +7,6 @@ import org.junit.jupiter.api.assertThrows
 import java.util.*
 
 class PølsefabrikkTest : PølseTest() {
-
     @Test
     fun pølsesett() {
         val p1 = 1.januar til 2.januar

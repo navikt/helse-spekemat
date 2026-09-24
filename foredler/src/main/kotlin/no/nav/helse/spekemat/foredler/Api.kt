@@ -9,7 +9,10 @@ import io.ktor.server.routing.*
 import no.nav.helse.spekemat.fabrikk.*
 import java.util.UUID
 
-fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
+fun Route.api(
+    pølsetjeneste: Pølsetjeneste,
+    erUtvikling: Boolean,
+) {
     route("/api/person") {
         if (erUtvikling) {
             delete {
@@ -23,12 +26,13 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
     route("/api/pølse") {
         post {
             val request = call.receiveNullable<NyPølseRequest>() ?: throw BadRequestException("Ugyldig request")
-            val pølse = PølseDto(
-                vedtaksperiodeId = request.pølse.vedtaksperiodeId,
-                behandlingId = request.pølse.behandlingId,
-                status = Pølsestatus.ÅPEN,
-                kilde = request.pølse.kilde
-            )
+            val pølse =
+                PølseDto(
+                    vedtaksperiodeId = request.pølse.vedtaksperiodeId,
+                    behandlingId = request.pølse.behandlingId,
+                    status = Pølsestatus.ÅPEN,
+                    kilde = request.pølse.kilde,
+                )
             val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
             pølsetjeneste.nyPølse(
                 request.fnr,
@@ -36,18 +40,19 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
                 pølse,
                 request.meldingsreferanseId,
                 request.hendelsedata,
-                callId
+                callId,
             )
             call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
         }
 
         patch {
             val request = call.receiveNullable<OppdaterPølseRequest>() ?: throw BadRequestException("Ugyldig request")
-            val status = when (request.status) {
-                PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
-                PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
-                PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
-            }
+            val status =
+                when (request.status) {
+                    PølsestatusDto.ÅPEN -> Pølsestatus.ÅPEN
+                    PølsestatusDto.LUKKET -> Pølsestatus.LUKKET
+                    PølsestatusDto.FORKASTET -> Pølsestatus.FORKASTET
+                }
             val callId = call.callId ?: throw BadRequestException("Mangler callId-header")
             try {
                 pølsetjeneste.oppdaterPølse(
@@ -58,7 +63,7 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
                     status,
                     request.meldingsreferanseId,
                     request.hendelsedata,
-                    callId
+                    callId,
                 )
                 call.respondText(ContentType.Application.Json, HttpStatusCode.OK) { """{ "melding": "takk for ditt bidrag" }""" }
             } catch (_: OppdatererEldreBehandlingException) {
@@ -77,23 +82,35 @@ fun Route.api(pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
     }
 }
 
-data class SlettRequest(val fnr: String)
-data class PølserRequest(val fnr: String)
-data class PølserResponse(val yrkesaktiviteter: List<YrkesaktivitetDto>)
+data class SlettRequest(
+    val fnr: String,
+)
+
+data class PølserRequest(
+    val fnr: String,
+)
+
+data class PølserResponse(
+    val yrkesaktiviteter: List<YrkesaktivitetDto>,
+)
+
 data class NyPølseRequest(
     val fnr: String,
     val yrkesaktivitetidentifikator: String,
     val pølse: NyPølseDto,
     val meldingsreferanseId: UUID,
-    val hendelsedata: String
+    val hendelsedata: String,
 )
+
 data class NyPølseDto(
     val vedtaksperiodeId: UUID,
     val behandlingId: UUID,
     // tingen som gjorde at behandlingen ble opprettet
-    val kilde: UUID
+    val kilde: UUID,
 )
+
 enum class PølsestatusDto { ÅPEN, LUKKET, FORKASTET }
+
 data class OppdaterPølseRequest(
     val fnr: String,
     val yrkesaktivitetidentifikator: String,
@@ -101,10 +118,10 @@ data class OppdaterPølseRequest(
     val behandlingId: UUID,
     val status: PølsestatusDto,
     val meldingsreferanseId: UUID,
-    val hendelsedata: String
+    val hendelsedata: String,
 )
 
 data class YrkesaktivitetDto(
     val yrkesaktivitetidentifikator: String,
-    val rader: List<PølseradDto>
+    val rader: List<PølseradDto>,
 )

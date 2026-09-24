@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test
 import java.util.*
 
 class DuplikathåndteringTest : PølseTest() {
-
     @Test
     fun `en duplikat ny pølse`() {
         val p1 = 1.januar til 5.januar

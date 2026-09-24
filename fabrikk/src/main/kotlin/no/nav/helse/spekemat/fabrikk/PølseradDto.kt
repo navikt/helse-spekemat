@@ -4,5 +4,5 @@ import java.util.*
 
 data class PølseradDto(
     val pølser: List<PølseDto>,
-    val kildeTilRad: UUID
+    val kildeTilRad: UUID,
 )

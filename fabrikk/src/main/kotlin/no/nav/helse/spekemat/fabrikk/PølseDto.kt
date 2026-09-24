@@ -7,5 +7,5 @@ data class PølseDto(
     val behandlingId: UUID,
     val status: Pølsestatus,
     // tingen som gjorde at behandlingen ble opprettet
-    val kilde: UUID
+    val kilde: UUID,
 )

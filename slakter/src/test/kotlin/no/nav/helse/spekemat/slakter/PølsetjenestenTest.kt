@@ -22,12 +22,15 @@ class PølsetjenestenTest {
         const val ORGN = "987654321"
     }
 
-    private val azureTokenProvider = object : AzureTokenProvider {
-        override fun bearerToken(scope: String) = AzureToken("liksom-token", LocalDateTime.MAX).ok()
-        override fun onBehalfOfToken(scope: String, token: String): Result<AzureToken> {
-            throw NotImplementedError("ikke implementert i mock")
+    private val azureTokenProvider =
+        object : AzureTokenProvider {
+            override fun bearerToken(scope: String) = AzureToken("liksom-token", LocalDateTime.MAX).ok()
+
+            override fun onBehalfOfToken(
+                scope: String,
+                token: String,
+            ): Result<AzureToken> = throw NotImplementedError("ikke implementert i mock")
         }
-    }
     private var httpClientMock = mockk<HttpClient>()
     private val pølsetjeneste = Pølsetjenesten(httpClientMock, azureTokenProvider, "scope-til-spekemat")
 
@@ -42,9 +45,10 @@ class PølsetjenestenTest {
 }"""
         every { httpClientMock.send<String>(any(), any()) } returns MockHttpResponse(errorBody, 404, mapOf("callId" to "liksom call id"))
 
-        val error = assertThrows<IkkeFunnetException> {
-            pølsetjeneste.behandlingForkastet(FNR, ORGN, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "{}")
-        }
+        val error =
+            assertThrows<IkkeFunnetException> {
+                pølsetjeneste.behandlingForkastet(FNR, ORGN, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), "{}")
+            }
         assertNotNull(error.feilmeldingResponse)
         assertTrue(error.feilmeldingResponse!!.detail!!.contains("Ikke funnet"))
     }

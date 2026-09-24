@@ -23,9 +23,32 @@ import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 interface Pølsetjeneste {
-    fun behandlingOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String)
-    fun behandlingLukket(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
-    fun behandlingForkastet(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, meldingsreferanseId: UUID, hendelsedata: String)
+    fun behandlingOpprettet(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        pølse: PølseDto,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    )
+
+    fun behandlingLukket(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        behandlingId: UUID,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    )
+
+    fun behandlingForkastet(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        behandlingId: UUID,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    )
+
     fun slett(fnr: String)
 }
 
@@ -33,19 +56,26 @@ class Pølsetjenesten(
     private val httpClient: HttpClient,
     private val azure: AzureTokenProvider,
     private val scope: String,
-    private val objectMapper: ObjectMapper = jacksonObjectMapper()
+    private val objectMapper: ObjectMapper = jacksonObjectMapper(),
 ) : Pølsetjeneste {
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private const val CALL_ID_HEADER = "callId"
     }
+
     override fun slett(fnr: String) {
         val request = lagSlettRequest(fnr)
         sjekkOKResponseOgRetry(request)
     }
 
-    override fun behandlingOpprettet(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String) {
+    override fun behandlingOpprettet(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        pølse: PølseDto,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    ) {
         val request = lagPølseRequest(fnr, yrkesaktivitetidentifikator, pølse, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
     }
@@ -56,7 +86,7 @@ class Pølsetjenesten(
         vedtaksperiodeId: UUID,
         behandlingId: UUID,
         meldingsreferanseId: UUID,
-        hendelsedata: String
+        hendelsedata: String,
     ) {
         val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, behandlingId, status = LUKKET, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
@@ -68,7 +98,7 @@ class Pølsetjenesten(
         vedtaksperiodeId: UUID,
         behandlingId: UUID,
         meldingsreferanseId: UUID,
-        hendelsedata: String
+        hendelsedata: String,
     ) {
         val request = lagOppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, vedtaksperiodeId, behandlingId, status = FORKASTET, meldingsreferanseId, hendelsedata)
         sjekkOKResponseOgRetry(request)
@@ -89,54 +119,87 @@ class Pølsetjenesten(
         reagerPåFeilkode(response.statusCode(), callId, response.body())
     }
 
-    private fun reagerPåFeilkode(statusCode: Int, callId: String, responseBody: String) {
+    private fun reagerPåFeilkode(
+        statusCode: Int,
+        callId: String,
+        responseBody: String,
+    ) {
         sikkerlogg.info("Forventet HTTP 200. Fikk {}\n{}\nResponse:\n{}", statusCode, kv("callId", callId), responseBody)
         when (statusCode) {
             404 -> throw IkkeFunnetException("Vedtaksperioden eller personen finnes ikke", callId, parseResponseSomFeilmelding(responseBody))
-            else -> throw RuntimeException("Forventet HTTP 200 for callId=${callId}. Fikk $statusCode")
+            else -> throw RuntimeException("Forventet HTTP 200 for callId=$callId. Fikk $statusCode")
         }
     }
 
-    private fun parseResponseSomFeilmelding(responseBody: String) = try {
-        objectMapper.readValue<FeilmeldingResponse>(responseBody)
-    } catch (err: Exception) {
-        sikkerlogg.info("klarte ikke tolke respons som json: ${err.message}", err)
-        null
-    }
+    private fun parseResponseSomFeilmelding(responseBody: String) =
+        try {
+            objectMapper.readValue<FeilmeldingResponse>(responseBody)
+        } catch (err: Exception) {
+            sikkerlogg.info("klarte ikke tolke respons som json: ${err.message}", err)
+            null
+        }
 
-    private fun lagPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, pølse: PølseDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
+    private fun lagPølseRequest(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        pølse: PølseDto,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    ): HttpRequest {
         val requestBody = objectMapper.writeValueAsString(PølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, pølse, hendelsedata))
         return lagPOSTRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
-    private fun lagOppdaterPølseRequest(fnr: String, yrkesaktivitetidentifikator: String, vedtaksperiodeId: UUID, behandlingId: UUID, status: PølsestatusDto, meldingsreferanseId: UUID, hendelsedata: String): HttpRequest {
+    private fun lagOppdaterPølseRequest(
+        fnr: String,
+        yrkesaktivitetidentifikator: String,
+        vedtaksperiodeId: UUID,
+        behandlingId: UUID,
+        status: PølsestatusDto,
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    ): HttpRequest {
         val requestBody = objectMapper.writeValueAsString(OppdaterPølseRequest(fnr, yrkesaktivitetidentifikator, meldingsreferanseId, vedtaksperiodeId, behandlingId, status, hendelsedata))
         return lagPATCHRequest(URI("http://spekemat/api/pølse"), requestBody, callId = meldingsreferanseId)
     }
 
     private fun lagSlettRequest(fnr: String): HttpRequest {
         @Language("JSON")
-        val requestBody = """{
+        val requestBody =
+            """{
             | "fnr": "$fnr"
-            |}""".trimMargin()
+            |}
+            """.trimMargin()
         return lagDELETERequest(URI("http://spekemat/api/person"), requestBody)
     }
 
-    private fun lagDELETERequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
-        return lagRequest(uri, "DELETE", body, callId)
-    }
+    private fun lagDELETERequest(
+        uri: URI,
+        body: String,
+        callId: UUID = UUID.randomUUID(),
+    ): HttpRequest = lagRequest(uri, "DELETE", body, callId)
 
-    private fun lagPOSTRequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
-        return lagRequest(uri, "POST", body, callId)
-    }
+    private fun lagPOSTRequest(
+        uri: URI,
+        body: String,
+        callId: UUID = UUID.randomUUID(),
+    ): HttpRequest = lagRequest(uri, "POST", body, callId)
 
-    private fun lagPATCHRequest(uri: URI, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
-        return lagRequest(uri, "PATCH", body, callId)
-    }
+    private fun lagPATCHRequest(
+        uri: URI,
+        body: String,
+        callId: UUID = UUID.randomUUID(),
+    ): HttpRequest = lagRequest(uri, "PATCH", body, callId)
 
-    private fun lagRequest(uri: URI, method: String, body: String, callId: UUID = UUID.randomUUID()): HttpRequest {
+    private fun lagRequest(
+        uri: URI,
+        method: String,
+        body: String,
+        callId: UUID = UUID.randomUUID(),
+    ): HttpRequest {
         sikkerlogg.info("sender $method til <$uri> med {} og body:\n$body", kv("callId", callId))
-        return HttpRequest.newBuilder(uri)
+        return HttpRequest
+            .newBuilder(uri)
             .header("Authorization", "Bearer ${azure.bearerToken(scope).getOrThrow().token}")
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
@@ -152,7 +215,7 @@ class Pølsetjenesten(
         val yrkesaktivitetidentifikator: String,
         val meldingsreferanseId: UUID,
         val pølse: PølseDto,
-        val hendelsedata: String
+        val hendelsedata: String,
     )
 
     private data class OppdaterPølseRequest(
@@ -162,7 +225,7 @@ class Pølsetjenesten(
         val vedtaksperiodeId: UUID,
         val behandlingId: UUID,
         val status: PølsestatusDto,
-        val hendelsedata: String
+        val hendelsedata: String,
     )
 }
 
@@ -172,14 +235,19 @@ data class FeilmeldingResponse(
     val title: String,
     val status: Int,
     val detail: String?,
-    val callId: String?
+    val callId: String?,
 )
-class IkkeFunnetException(override val message: String?, val callId: String, val feilmeldingResponse: FeilmeldingResponse?) : RuntimeException()
+
+class IkkeFunnetException(
+    override val message: String?,
+    val callId: String,
+    val feilmeldingResponse: FeilmeldingResponse?,
+) : RuntimeException()
 
 enum class PølsestatusDto { LUKKET, FORKASTET }
 
 data class PølseDto(
     val vedtaksperiodeId: UUID,
     val behandlingId: UUID,
-    val kilde: UUID
+    val kilde: UUID,
 )

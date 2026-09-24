@@ -33,49 +33,57 @@ fun main() {
 
 fun launchApp(env: Map<String, String>) {
     val erUtvikling = env["NAIS_CLUSTER_NAME"] == "dev-gcp"
-    val azureApp = AzureApp(
-        jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
-        issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
-        clientId = env.getValue("AZURE_APP_CLIENT_ID"),
-    )
+    val azureApp =
+        AzureApp(
+            jwkProvider = JwkProviderBuilder(URI(env.getValue("AZURE_OPENID_CONFIG_JWKS_URI")).toURL()).build(),
+            issuer = env.getValue("AZURE_OPENID_CONFIG_ISSUER"),
+            clientId = env.getValue("AZURE_APP_CLIENT_ID"),
+        )
 
-    val hikariConfig = HikariConfig().apply {
-        jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", env.getValue("DATABASE_HOST"), env.getValue("DATABASE_PORT"), env.getValue("DATABASE_DATABASE"))
-        username = env.getValue("DATABASE_USERNAME")
-        password = env.getValue("DATABASE_PASSWORD")
-        maximumPoolSize = 2
-        initializationFailTimeout = Duration.ofMinutes(5).toMillis()
-    }
+    val hikariConfig =
+        HikariConfig().apply {
+            jdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", env.getValue("DATABASE_HOST"), env.getValue("DATABASE_PORT"), env.getValue("DATABASE_DATABASE"))
+            username = env.getValue("DATABASE_USERNAME")
+            password = env.getValue("DATABASE_PASSWORD")
+            maximumPoolSize = 2
+            initializationFailTimeout = Duration.ofMinutes(5).toMillis()
+        }
 
     val dsProvider = StaticDataSource(hikariConfig)
     val dao = PølseDao(dsProvider)
     val pølsetjenesten = Pølsetjenesten(dao)
 
-    val app = naisApp(
-        meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
-        objectMapper = objectmapper,
-        applicationLogger = logg,
-        callLogger = LoggerFactory.getLogger("no.nav.helse.spekemat.foredler.api.CallLogging"),
-        timersConfig = { call, _ ->
-            this
-                .tag("azp_name", call.principal<JWTPrincipal>()?.get("azp_name") ?: "n/a")
-                // https://github.com/linkerd/polixy/blob/main/DESIGN.md#l5d-client-id-client-id
-                // eksempel: <APP>.<NAMESPACE>.serviceaccount.identity.linkerd.cluster.local
-                .tag("konsument", call.request.header("L5d-Client-Id") ?: "n/a")
-        },
-        mdcEntries = mapOf(
-            "azp_name" to { call: ApplicationCall -> call.principal<JWTPrincipal>()?.get("azp_name") },
-            "konsument" to { call: ApplicationCall -> call.request.header("L5d-Client-Id") }
-        ),
-        applicationModule = {
-            authentication { azureApp.konfigurerJwtAuth(this) }
-            lagApplikasjonsmodul(hikariConfig, pølsetjenesten, erUtvikling)
-        }
-    )
+    val app =
+        naisApp(
+            meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT),
+            objectMapper = objectmapper,
+            applicationLogger = logg,
+            callLogger = LoggerFactory.getLogger("no.nav.helse.spekemat.foredler.api.CallLogging"),
+            timersConfig = { call, _ ->
+                this
+                    .tag("azp_name", call.principal<JWTPrincipal>()?.get("azp_name") ?: "n/a")
+                    // https://github.com/linkerd/polixy/blob/main/DESIGN.md#l5d-client-id-client-id
+                    // eksempel: <APP>.<NAMESPACE>.serviceaccount.identity.linkerd.cluster.local
+                    .tag("konsument", call.request.header("L5d-Client-Id") ?: "n/a")
+            },
+            mdcEntries =
+                mapOf(
+                    "azp_name" to { call: ApplicationCall -> call.principal<JWTPrincipal>()?.get("azp_name") },
+                    "konsument" to { call: ApplicationCall -> call.request.header("L5d-Client-Id") },
+                ),
+            applicationModule = {
+                authentication { azureApp.konfigurerJwtAuth(this) }
+                lagApplikasjonsmodul(hikariConfig, pølsetjenesten, erUtvikling)
+            },
+        )
     app.start(wait = true)
 }
 
-fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, pølsetjeneste: Pølsetjeneste, erUtvikling: Boolean) {
+fun Application.lagApplikasjonsmodul(
+    migrationConfig: HikariConfig,
+    pølsetjeneste: Pølsetjeneste,
+    erUtvikling: Boolean,
+) {
     monitor.subscribe(ApplicationStarted) {
         migrate(migrationConfig)
     }
@@ -86,8 +94,11 @@ fun Application.lagApplikasjonsmodul(migrationConfig: HikariConfig, pølsetjenes
     }
 }
 
-private class StaticDataSource(hikariConfig: HikariConfig) : DatasourceProvider {
-    private val ds by lazy { // by lazy slik at vi lager én verdi, men først når noen trenger den
+private class StaticDataSource(
+    hikariConfig: HikariConfig,
+) : DatasourceProvider {
+    private val ds by lazy {
+        // by lazy slik at vi lager én verdi, men først når noen trenger den
         hikariConfig.maximumPoolSize = 5
         HikariDataSource(hikariConfig)
     }
@@ -97,7 +108,8 @@ private class StaticDataSource(hikariConfig: HikariConfig) : DatasourceProvider 
 
 private fun migrate(config: HikariConfig) {
     HikariDataSource(config).use { ds ->
-        Flyway.configure()
+        Flyway
+            .configure()
             .dataSource(ds)
             .validateMigrationNaming(true)
             .load()
@@ -110,5 +122,5 @@ data class FeilResponse(
     val title: String,
     val status: Int,
     val detail: String?,
-    val callId: String?
+    val callId: String?,
 )

@@ -20,24 +20,26 @@ fun interface DatasourceProvider {
     fun getDataSource(): DataSource
 }
 
-class PølseDao(private val dataSource: DatasourceProvider) {
-
+class PølseDao(
+    private val dataSource: DatasourceProvider,
+) {
     fun slett(fnr: String) {
         sessionOf(dataSource.getDataSource()).use {
             it.run(queryOf("DELETE FROM person WHERE fnr=?", fnr).asExecute)
         }
     }
 
-    fun hent(fnr: String) = hentPerson(fnr).map { (yrkesaktivitetidentifikator, rader) ->
-        YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.tilModellDto()).pakke())
-    }
+    fun hent(fnr: String) =
+        hentPerson(fnr).map { (yrkesaktivitetidentifikator, rader) ->
+            YrkesaktivitetDto(yrkesaktivitetidentifikator, Pølsefabrikk.gjenopprett(rader.tilModellDto()).pakke())
+        }
 
     fun behandle(
         fnr: String,
         yrkesaktivitetidentifikator: String,
         meldingsreferanseId: UUID,
         hendelsedata: String,
-        behandling: (Pølsefabrikk) -> PølseDto
+        behandling: (Pølsefabrikk) -> PølseDto,
     ) {
         sessionOf(dataSource.getDataSource()).use {
             it.transaction { session ->
@@ -45,9 +47,10 @@ class PølseDao(private val dataSource: DatasourceProvider) {
 
                 val personId = session.hentEllerOpprettPerson(fnr)
 
-                val fabrikk = session.hentPølsepakke(personId, yrkesaktivitetidentifikator)?.let { personrad ->
-                    Pølsefabrikk.gjenopprett(personrad.tilModellDto())
-                } ?: Pølsefabrikk()
+                val fabrikk =
+                    session.hentPølsepakke(personId, yrkesaktivitetidentifikator)?.let { personrad ->
+                        Pølsefabrikk.gjenopprett(personrad.tilModellDto())
+                    } ?: Pølsefabrikk()
 
                 val resultat = behandling(fabrikk)
                 session.lagre(personId, yrkesaktivitetidentifikator, fabrikk.pakke(), resultat.kilde, meldingsreferanseId, hendelsedata)
@@ -55,9 +58,7 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         }
     }
 
-    private fun TransactionalSession.hentEllerOpprettPerson(fnr: String): Long {
-        return hentPersonOgLåsForBehandling(fnr) ?: opprettPerson(fnr)
-    }
+    private fun TransactionalSession.hentEllerOpprettPerson(fnr: String): Long = hentPersonOgLåsForBehandling(fnr) ?: opprettPerson(fnr)
 
     private fun hentPerson(fnr: String) =
         sessionOf(dataSource.getDataSource()).use { session ->
@@ -70,98 +71,129 @@ class PølseDao(private val dataSource: DatasourceProvider) {
         resultat: List<PølseradDto>,
         kildeId: UUID,
         meldingsreferanseId: UUID,
-        hendelsedata: String
+        hendelsedata: String,
     ) {
         val hendelseId = opprettHendelse(meldingsreferanseId, hendelsedata)
         val pølsepakkejson = objectMapper.writeValueAsString(Personrad.fraModellDto(resultat))
 
         run(queryOf(KOPIER_PØLSEPAKKE, mapOf("personId" to personId, "yid" to yrkesaktivitetidentifikator)).asExecute)
-        run(queryOf(
-            OPPRETT_PØLSEPAKKE, mapOf(
-            "personId" to personId,
-            "yid" to yrkesaktivitetidentifikator,
-            "hendelseId" to hendelseId,
-            "kildeId" to kildeId,
-            "data" to pølsepakkejson
-        )).asExecute)
+        run(
+            queryOf(
+                OPPRETT_PØLSEPAKKE,
+                mapOf(
+                    "personId" to personId,
+                    "yid" to yrkesaktivitetidentifikator,
+                    "hendelseId" to hendelseId,
+                    "kildeId" to kildeId,
+                    "data" to pølsepakkejson,
+                ),
+            ).asExecute,
+        )
     }
 
-    private fun TransactionalSession.hendelseHåndtertFør(meldingsreferanseId: UUID): Boolean {
-        return checkNotNull(run(queryOf(HENT_HENDELSE, mapOf("id" to meldingsreferanseId)).map { rad ->
-            rad.boolean("finnes")
-        }.asSingle)) { "Forventer ikke å få null her" }
-    }
+    private fun TransactionalSession.hendelseHåndtertFør(meldingsreferanseId: UUID): Boolean =
+        checkNotNull(
+            run(
+                queryOf(HENT_HENDELSE, mapOf("id" to meldingsreferanseId))
+                    .map { rad ->
+                        rad.boolean("finnes")
+                    }.asSingle,
+            ),
+        ) { "Forventer ikke å få null her" }
 
-    private fun TransactionalSession.opprettHendelse(meldingsreferanseId: UUID, hendelsedata: String): Long {
-        return checkNotNull(run(queryOf(OPPRETT_HENDELSE, mapOf("id" to meldingsreferanseId, "data" to hendelsedata)).map { rad ->
-            rad.long("id")
-        }.asSingle)) {
+    private fun TransactionalSession.opprettHendelse(
+        meldingsreferanseId: UUID,
+        hendelsedata: String,
+    ): Long =
+        checkNotNull(
+            run(
+                queryOf(OPPRETT_HENDELSE, mapOf("id" to meldingsreferanseId, "data" to hendelsedata))
+                    .map { rad ->
+                        rad.long("id")
+                    }.asSingle,
+            ),
+        ) {
             "Forventet å lage en ny hendelse"
         }
-    }
-    private fun TransactionalSession.hentPersonOgLåsForBehandling(fnr: String): Long? {
-        return run(queryOf(HENT_PERSON_MED_LÅS, mapOf("fnr" to fnr)).map { it.long("id") }.asSingle)
-    }
-    private fun Session.hentPølsepakke(personId: Long, yrkesaktivitetidentifikator: String) =
-        run(queryOf(HENT_PØLSEPAKKE_MED_LÅS, mapOf("pid" to personId, "yid" to yrkesaktivitetidentifikator)).map { rad ->
-            objectMapper.readValue<Personrad>(rad.string("data"))
-        }.asSingle)
+
+    private fun TransactionalSession.hentPersonOgLåsForBehandling(fnr: String): Long? = run(queryOf(HENT_PERSON_MED_LÅS, mapOf("fnr" to fnr)).map { it.long("id") }.asSingle)
+
+    private fun Session.hentPølsepakke(
+        personId: Long,
+        yrkesaktivitetidentifikator: String,
+    ) = run(
+        queryOf(HENT_PØLSEPAKKE_MED_LÅS, mapOf("pid" to personId, "yid" to yrkesaktivitetidentifikator))
+            .map { rad ->
+                objectMapper.readValue<Personrad>(rad.string("data"))
+            }.asSingle,
+    )
+
     private fun Session.hentPølsepakker(fnr: String) =
-        run(queryOf(HENT_PØLSEPAKKER, mapOf("fnr" to fnr)).map { rad ->
-            rad.string("yrkesaktivitetidentifikator") to objectMapper.readValue<Personrad>(rad.string("data"))
-        }.asList)
-    private fun TransactionalSession.opprettPerson(fnr: String): Long {
-        return checkNotNull(run(queryOf(OPPRETT_PERSON, mapOf("fnr" to fnr)).map { rad -> rad.long("id") }.asSingle)) {
+        run(
+            queryOf(HENT_PØLSEPAKKER, mapOf("fnr" to fnr))
+                .map { rad ->
+                    rad.string("yrkesaktivitetidentifikator") to objectMapper.readValue<Personrad>(rad.string("data"))
+                }.asList,
+        )
+
+    private fun TransactionalSession.opprettPerson(fnr: String): Long =
+        checkNotNull(run(queryOf(OPPRETT_PERSON, mapOf("fnr" to fnr)).map { rad -> rad.long("id") }.asSingle)) {
             "Forventet å finne person eller opprette en ny"
         }
-    }
 
     private data class Personrad(
-        val rader: List<PølseradDbDto>
+        val rader: List<PølseradDbDto>,
     ) {
         companion object {
-            fun fraModellDto(rader: List<PølseradDto>) = Personrad(
-                rader = rader.map { rad ->
-                    PølseradDbDto(
-                        kildeTilRad = rad.kildeTilRad,
-                        pølser = rad.pølser.map { pølse ->
-                            PølseradDbDto.PølseDbDto(
-                                vedtaksperiodeId = pølse.vedtaksperiodeId,
-                                generasjonId = pølse.behandlingId,
-                                status = when (pølse.status) {
-                                    Pølsestatus.ÅPEN -> PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN
-                                    Pølsestatus.LUKKET -> PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET
-                                    Pølsestatus.FORKASTET -> PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET
-                                },
-                                kilde = pølse.kilde
+            fun fraModellDto(rader: List<PølseradDto>) =
+                Personrad(
+                    rader =
+                        rader.map { rad ->
+                            PølseradDbDto(
+                                kildeTilRad = rad.kildeTilRad,
+                                pølser =
+                                    rad.pølser.map { pølse ->
+                                        PølseradDbDto.PølseDbDto(
+                                            vedtaksperiodeId = pølse.vedtaksperiodeId,
+                                            generasjonId = pølse.behandlingId,
+                                            status =
+                                                when (pølse.status) {
+                                                    Pølsestatus.ÅPEN -> PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN
+                                                    Pølsestatus.LUKKET -> PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET
+                                                    Pølsestatus.FORKASTET -> PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET
+                                                },
+                                            kilde = pølse.kilde,
+                                        )
+                                    },
                             )
-                        }
-                    )
-                }
-            )
+                        },
+                )
         }
 
-        fun tilModellDto() = rader.map { rad ->
-            PølseradDto(
-                kildeTilRad = rad.kildeTilRad,
-                pølser = rad.pølser.map { pølse ->
-                    PølseDto(
-                        vedtaksperiodeId = pølse.vedtaksperiodeId,
-                        behandlingId = pølse.generasjonId,
-                        status = when (pølse.status) {
-                            PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN -> Pølsestatus.ÅPEN
-                            PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET -> Pølsestatus.LUKKET
-                            PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET -> Pølsestatus.FORKASTET
+        fun tilModellDto() =
+            rader.map { rad ->
+                PølseradDto(
+                    kildeTilRad = rad.kildeTilRad,
+                    pølser =
+                        rad.pølser.map { pølse ->
+                            PølseDto(
+                                vedtaksperiodeId = pølse.vedtaksperiodeId,
+                                behandlingId = pølse.generasjonId,
+                                status =
+                                    when (pølse.status) {
+                                        PølseradDbDto.PølseDbDto.PølseDbstatus.ÅPEN -> Pølsestatus.ÅPEN
+                                        PølseradDbDto.PølseDbDto.PølseDbstatus.LUKKET -> Pølsestatus.LUKKET
+                                        PølseradDbDto.PølseDbDto.PølseDbstatus.FORKASTET -> Pølsestatus.FORKASTET
+                                    },
+                                kilde = pølse.kilde,
+                            )
                         },
-                        kilde = pølse.kilde
-                    )
-                }
-            )
-        }
+                )
+            }
 
         data class PølseradDbDto(
             val pølser: List<PølseDbDto>,
-            val kildeTilRad: UUID
+            val kildeTilRad: UUID,
         ) {
             data class PølseDbDto(
                 val vedtaksperiodeId: UUID,
@@ -169,18 +201,20 @@ class PølseDao(private val dataSource: DatasourceProvider) {
                 val generasjonId: UUID,
                 val status: PølseDbstatus,
                 // tingen som gjorde at behandlingen ble opprettet
-                val kilde: UUID
+                val kilde: UUID,
             ) {
                 enum class PølseDbstatus { ÅPEN, LUKKET, FORKASTET }
             }
         }
     }
+
     private companion object {
         private val logg = LoggerFactory.getLogger(this::class.java)
         private val objectMapper = jacksonObjectMapper()
 
         @Language("PostgreSQL")
         private const val HENT_PØLSEPAKKE_MED_LÅS = """SELECT data FROM polsepakke WHERE yrkesaktivitetidentifikator = :yid AND person_id = :pid FOR UPDATE;"""
+
         @Language("PostgreSQL")
         private const val HENT_PØLSEPAKKER = """SELECT yrkesaktivitetidentifikator, data FROM polsepakke WHERE person_id = (SELECT id FROM person WHERE fnr=:fnr);"""
 

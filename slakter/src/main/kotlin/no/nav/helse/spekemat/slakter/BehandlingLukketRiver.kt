@@ -14,30 +14,39 @@ import java.util.*
 
 internal class BehandlingLukketRiver(
     rapidsConnection: RapidsConnection,
-    private val pølsetjeneste: Pølsetjeneste
-): River.PacketListener {
-
+    private val pølsetjeneste: Pølsetjeneste,
+) : River.PacketListener {
     private companion object {
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private val logg = LoggerFactory.getLogger(BehandlingLukketRiver::class.java)
     }
 
     init {
-        River(rapidsConnection).apply {
-            precondition { it.requireValue("@event_name", "behandling_lukket") }
-            validate {
-                it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "behandlingId")
-                it.validerYrkesaktivitetidentifikator()
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition { it.requireValue("@event_name", "behandling_lukket") }
+                validate {
+                    it.requireKey("@id", "fødselsnummer", "vedtaksperiodeId", "behandlingId")
+                    it.validerYrkesaktivitetidentifikator()
+                }
+            }.register(this)
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata,
+    ) {
         logg.info("Håndterer ikke behandling_lukket pga. problem: se sikker logg")
         sikkerlogg.info("Håndterer ikke behandling_lukket pga. problem: {}", problems.toExtendedReport())
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry,
+    ) {
         val vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID()
         val behandlingId = packet["behandlingId"].asUUID()
 

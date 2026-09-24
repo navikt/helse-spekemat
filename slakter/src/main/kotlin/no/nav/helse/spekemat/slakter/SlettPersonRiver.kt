@@ -10,9 +10,8 @@ import org.slf4j.LoggerFactory
 
 internal class SlettPersonRiver(
     rapidsConnection: RapidsConnection,
-    private val tjeneste: Pølsetjeneste
-): River.PacketListener {
-
+    private val tjeneste: Pølsetjeneste,
+) : River.PacketListener {
     private companion object {
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private val logg = LoggerFactory.getLogger(SlettPersonRiver::class.java)
@@ -20,15 +19,21 @@ internal class SlettPersonRiver(
     }
 
     init {
-        River(rapidsConnection).apply {
-            precondition { it.requireValue("@event_name", "slett_person") }
-            validate {
-                it.requireKey("@id", "fødselsnummer")
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition { it.requireValue("@event_name", "slett_person") }
+                validate {
+                    it.requireKey("@id", "fødselsnummer")
+                }
+            }.register(this)
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry,
+    ) {
         val fødselsnummer = packet["fødselsnummer"].asText()
         sikkerlogg.info("Sletter person med fødselsnummer: $fødselsnummer")
         logg.info("Sletter person med fødselsnummer: ${fødselsnummer.maskertFnr}")

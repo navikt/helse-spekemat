@@ -7,7 +7,7 @@ internal fun JsonMessage.validerYrkesaktivitetidentifikator() {
     interestedIn("organisasjonsnummer")
 }
 
-internal fun JsonMessage.yrkesaktivitetidentifikator() : String {
+internal fun JsonMessage.yrkesaktivitetidentifikator(): String {
     val yrkesaktivitetstype = get("yrkesaktivitetstype").asText()
     if (yrkesaktivitetstype != "ARBEIDSTAKER") return yrkesaktivitetstype
     return get("organisasjonsnummer").asText()

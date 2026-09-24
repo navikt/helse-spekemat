@@ -16,24 +16,38 @@ abstract class PølseTest {
     private fun pølse(
         vedtaksperiodeId: UUID,
         kilde: UUID = UUID.randomUUID(),
-        status: Pølsestatus = Pølsestatus.ÅPEN
+        status: Pølsestatus = Pølsestatus.ÅPEN,
     ) = Pølse(vedtaksperiodeId, UUID.randomUUID(), status, kilde)
 
     protected infix fun LocalDate.til(tom: LocalDate) = pølse(UUID.randomUUID())
+
     protected infix fun Pølse.som(vedtaksperiodeId: UUID) = this.copy(vedtaksperiodeId = vedtaksperiodeId)
-    protected fun Pølse.nyBehandling(behandlingId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID()) = fordi(kilde).copy(behandlingId = behandlingId)
+
+    protected fun Pølse.nyBehandling(
+        behandlingId: UUID = UUID.randomUUID(),
+        kilde: UUID = UUID.randomUUID(),
+    ) = fordi(kilde).copy(behandlingId = behandlingId)
+
     protected infix fun Pølse.fordi(kilde: UUID) = this.copy(kilde = kilde)
 
     protected fun Pølse.lukket() = this.copy(status = Pølsestatus.LUKKET)
+
     protected fun Pølse.forkastet() = this.copy(status = Pølsestatus.FORKASTET)
 
     protected val mandag = LocalDate.of(2018, 1, 1)
     protected val Int.januar get() = mandag.withDayOfMonth(this).withMonth(1)
 
-    protected fun assertEquals(expected: Set<Pølse>, actual: PølseradDto) {
+    protected fun assertEquals(
+        expected: Set<Pølse>,
+        actual: PølseradDto,
+    ) {
         assertEquals(expected, actual.pølser)
     }
-    protected fun assertEquals(expected: Set<Pølse>, actual: List<PølseDto>) {
+
+    protected fun assertEquals(
+        expected: Set<Pølse>,
+        actual: List<PølseDto>,
+    ) {
         assertEquals(expected.size, actual.size)
         val ingenMatch = expected.map { it.dto() }.filterNot { it in actual }
         assertEquals(emptyList<PølseDto>(), ingenMatch) { "Det er pølser som ikke finnes i actual" }

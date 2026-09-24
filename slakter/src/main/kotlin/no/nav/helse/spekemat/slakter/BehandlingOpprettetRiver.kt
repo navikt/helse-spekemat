@@ -14,36 +14,46 @@ import java.util.*
 
 internal class BehandlingOpprettetRiver(
     rapidsConnection: RapidsConnection,
-    private val pølsetjeneste: Pølsetjeneste
-): River.PacketListener {
-
+    private val pølsetjeneste: Pølsetjeneste,
+) : River.PacketListener {
     private companion object {
         private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
         private val logg = LoggerFactory.getLogger(BehandlingOpprettetRiver::class.java)
     }
 
     init {
-        River(rapidsConnection).apply {
-            precondition { it.requireValue("@event_name", "behandling_opprettet") }
-            validate {
-                it.requireKey("@id", "fødselsnummer", "kilde.meldingsreferanseId", "vedtaksperiodeId", "behandlingId")
-                it.validerYrkesaktivitetidentifikator()
-            }
-        }.register(this)
+        River(rapidsConnection)
+            .apply {
+                precondition { it.requireValue("@event_name", "behandling_opprettet") }
+                validate {
+                    it.requireKey("@id", "fødselsnummer", "kilde.meldingsreferanseId", "vedtaksperiodeId", "behandlingId")
+                    it.validerYrkesaktivitetidentifikator()
+                }
+            }.register(this)
     }
 
-    override fun onError(problems: MessageProblems, context: MessageContext, metadata: MessageMetadata) {
+    override fun onError(
+        problems: MessageProblems,
+        context: MessageContext,
+        metadata: MessageMetadata,
+    ) {
         logg.info("Håndterer ikke behandling_opprettet pga. problem: se sikker logg")
         sikkerlogg.info("Håndterer ikke behandling_opprettet pga. problem: {}", problems.toExtendedReport())
     }
 
-    override fun onPacket(packet: JsonMessage, context: MessageContext, metadata: MessageMetadata, meterRegistry: MeterRegistry) {
+    override fun onPacket(
+        packet: JsonMessage,
+        context: MessageContext,
+        metadata: MessageMetadata,
+        meterRegistry: MeterRegistry,
+    ) {
         val behandlingId = packet["behandlingId"].asUUID()
-        val pølse = PølseDto(
-            vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID(),
-            behandlingId = behandlingId,
-            kilde = packet["kilde.meldingsreferanseId"].asUUID()
-        )
+        val pølse =
+            PølseDto(
+                vedtaksperiodeId = packet["vedtaksperiodeId"].asUUID(),
+                behandlingId = behandlingId,
+                kilde = packet["kilde.meldingsreferanseId"].asUUID(),
+            )
 
         val meldingsreferanseId = packet["@id"].asUUID()
         val fnr = packet["fødselsnummer"].asText()

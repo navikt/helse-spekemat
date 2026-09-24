@@ -6,24 +6,53 @@ import java.util.*
 
 internal class Hendelsefabrikk(
     private val rapidsConnection: TestRapid,
-    private val fnr: String
+    private val fnr: String,
 ) {
-    fun sendBehandlingOpprettetArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+    fun sendBehandlingOpprettetArbeidstaker(
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        kilde: UUID = UUID.randomUUID(),
+        orgnr: String,
+        meldingsreferanseId: UUID = UUID.randomUUID(),
+        behandlingId: UUID = UUID.randomUUID(),
+    ) {
         rapidsConnection.sendTestMessage(lagBehandlingOpprettetArbeidstaker(meldingsreferanseId, vedtaksperiodeId, kilde, orgnr, behandlingId))
     }
 
-    fun sendBehandlingOpprettetSelvstendig(vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID = UUID.randomUUID(), meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+    fun sendBehandlingOpprettetSelvstendig(
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        kilde: UUID = UUID.randomUUID(),
+        meldingsreferanseId: UUID = UUID.randomUUID(),
+        behandlingId: UUID = UUID.randomUUID(),
+    ) {
         rapidsConnection.sendTestMessage(lagBehandlingOpprettetSelvstendig(meldingsreferanseId, vedtaksperiodeId, kilde, behandlingId))
     }
 
-    fun sendBehandlingLukketArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+    fun sendBehandlingLukketArbeidstaker(
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        orgnr: String,
+        meldingsreferanseId: UUID = UUID.randomUUID(),
+        behandlingId: UUID = UUID.randomUUID(),
+    ) {
         rapidsConnection.sendTestMessage(lagBehandlingLukketArbeidstaker(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
     }
-    fun sendBehandlingForkastetArbeidstaker(vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, meldingsreferanseId: UUID = UUID.randomUUID(), behandlingId: UUID = UUID.randomUUID()) {
+
+    fun sendBehandlingForkastetArbeidstaker(
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        orgnr: String,
+        meldingsreferanseId: UUID = UUID.randomUUID(),
+        behandlingId: UUID = UUID.randomUUID(),
+    ) {
         rapidsConnection.sendTestMessage(lagBehandlingForkastetArbeidstaker(meldingsreferanseId, vedtaksperiodeId, orgnr, behandlingId))
     }
+
     @Language("JSON")
-    fun lagBehandlingOpprettetArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingOpprettetArbeidstaker(
+        meldingsreferanseId: UUID,
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        kilde: UUID,
+        orgnr: String,
+        behandlingId: UUID = UUID.randomUUID(),
+    ) = """{
         |  "@event_name": "behandling_opprettet",
         |  "@id": "$meldingsreferanseId",
         |  "kilde": {
@@ -34,9 +63,16 @@ internal class Hendelsefabrikk(
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
-        |}""".trimMargin()
+        |}
+        """.trimMargin()
+
     @Language("JSON")
-    fun lagBehandlingLukketArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingLukketArbeidstaker(
+        meldingsreferanseId: UUID,
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        orgnr: String,
+        behandlingId: UUID = UUID.randomUUID(),
+    ) = """{
         |  "@event_name": "behandling_lukket",
         |  "@id": "$meldingsreferanseId",
         |  "fødselsnummer": "$fnr",
@@ -44,9 +80,16 @@ internal class Hendelsefabrikk(
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
-        |}""".trimMargin()
+        |}
+        """.trimMargin()
+
     @Language("JSON")
-    fun lagBehandlingForkastetArbeidstaker(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), orgnr: String, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingForkastetArbeidstaker(
+        meldingsreferanseId: UUID,
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        orgnr: String,
+        behandlingId: UUID = UUID.randomUUID(),
+    ) = """{
         |  "@event_name": "behandling_forkastet",
         |  "@id": "$meldingsreferanseId",
         |  "fødselsnummer": "$fnr",
@@ -54,20 +97,29 @@ internal class Hendelsefabrikk(
         |  "organisasjonsnummer": "$orgnr",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
-        |}""".trimMargin()
+        |}
+        """.trimMargin()
 
     fun sendSlettPerson() {
         rapidsConnection.sendTestMessage(lagSlettPerson())
     }
+
     @Language("JSON")
-    fun lagSlettPerson() = """{
+    fun lagSlettPerson() =
+        """{
         |  "@event_name": "slett_person",
         |  "@id": "${UUID.randomUUID()}",
         |  "fødselsnummer": "$fnr"
-        |}""".trimMargin()
+        |}
+        """.trimMargin()
 
     @Language("JSON")
-    fun lagBehandlingOpprettetSelvstendig(meldingsreferanseId: UUID, vedtaksperiodeId: UUID = UUID.randomUUID(), kilde: UUID, behandlingId: UUID = UUID.randomUUID()) = """{
+    fun lagBehandlingOpprettetSelvstendig(
+        meldingsreferanseId: UUID,
+        vedtaksperiodeId: UUID = UUID.randomUUID(),
+        kilde: UUID,
+        behandlingId: UUID = UUID.randomUUID(),
+    ) = """{
         |  "@event_name": "behandling_opprettet",
         |  "@id": "$meldingsreferanseId",
         |  "kilde": {
@@ -77,5 +129,6 @@ internal class Hendelsefabrikk(
         |  "yrkesaktivitetstype": "SELVSTENDIG",
         |  "vedtaksperiodeId": "$vedtaksperiodeId",
         |  "behandlingId": "$behandlingId"
-        |}""".trimMargin()
+        |}
+        """.trimMargin()
 }
