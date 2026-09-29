@@ -4,7 +4,7 @@ tbd-libs = "20260917.2152"
 
 [libraries]
 flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.7.0"
-hikaricp = "com.zaxxer:HikariCP:6.3.0"
+hikaricp = "com.zaxxer:HikariCP:7.1.0"
 jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.1"
 ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth" }
