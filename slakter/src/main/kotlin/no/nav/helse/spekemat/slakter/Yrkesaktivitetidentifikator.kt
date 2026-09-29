@@ -8,7 +8,7 @@ internal fun JsonMessage.validerYrkesaktivitetidentifikator() {
 }
 
 internal fun JsonMessage.yrkesaktivitetidentifikator(): String {
-    val yrkesaktivitetstype = get("yrkesaktivitetstype").asText()
+    val yrkesaktivitetstype = get("yrkesaktivitetstype").asString()
     if (yrkesaktivitetstype != "ARBEIDSTAKER") return yrkesaktivitetstype
-    return get("organisasjonsnummer").asText()
+    return get("organisasjonsnummer").asString()
 }

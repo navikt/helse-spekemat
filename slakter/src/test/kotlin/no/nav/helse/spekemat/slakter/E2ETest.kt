@@ -1,6 +1,5 @@
 package no.nav.helse.spekemat.slakter
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.azure.AzureToken
 import com.github.navikt.tbd_libs.azure.AzureTokenProvider
 import com.github.navikt.tbd_libs.mock.MockHttpResponse
@@ -14,6 +13,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.time.LocalDateTime
@@ -62,16 +62,16 @@ class E2ETest {
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
-            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asString())
 
             request.method() == "POST" &&
-                node.path("fnr").asText() == FNR &&
-                node.path("yrkesaktivitetidentifikator").asText() == ORGN &&
-                node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString() &&
-                node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString() &&
-                node.path("pølse").path("kilde").asText() == kilde.toString() &&
+                node.path("fnr").asString() == FNR &&
+                node.path("yrkesaktivitetidentifikator").asString() == ORGN &&
+                node.path("meldingsreferanseId").asString() == meldingsreferanseId.toString() &&
+                node.path("pølse").path("vedtaksperiodeId").asString() == vedtaksperiodeId.toString() &&
+                node.path("pølse").path("kilde").asString() == kilde.toString() &&
                 node.path("pølse").hasNonNull("behandlingId") &&
-                hendelseData.path("@event_name").asText() == "behandling_opprettet"
+                hendelseData.path("@event_name").asString() == "behandling_opprettet"
         }
     }
 
@@ -86,16 +86,16 @@ class E2ETest {
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
-            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asString())
 
             request.method() == "POST" &&
-                node.path("fnr").asText() == FNR &&
-                node.path("yrkesaktivitetidentifikator").asText() == "SELVSTENDIG" &&
-                node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString() &&
-                node.path("pølse").path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString() &&
-                node.path("pølse").path("kilde").asText() == kilde.toString() &&
+                node.path("fnr").asString() == FNR &&
+                node.path("yrkesaktivitetidentifikator").asString() == "SELVSTENDIG" &&
+                node.path("meldingsreferanseId").asString() == meldingsreferanseId.toString() &&
+                node.path("pølse").path("vedtaksperiodeId").asString() == vedtaksperiodeId.toString() &&
+                node.path("pølse").path("kilde").asString() == kilde.toString() &&
                 node.path("pølse").hasNonNull("behandlingId") &&
-                hendelseData.path("@event_name").asText() == "behandling_opprettet"
+                hendelseData.path("@event_name").asString() == "behandling_opprettet"
         }
     }
 
@@ -113,16 +113,16 @@ class E2ETest {
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
-            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asString())
 
             request.method() == "PATCH" &&
-                node.path("fnr").asText() == FNR &&
-                node.path("yrkesaktivitetidentifikator").asText() == ORGN &&
-                node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString() &&
-                node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString() &&
-                node.path("behandlingId").asText() == behandlingId.toString() &&
-                node.path("status").asText() == "LUKKET" &&
-                hendelseData.path("@event_name").asText() == "behandling_lukket"
+                node.path("fnr").asString() == FNR &&
+                node.path("yrkesaktivitetidentifikator").asString() == ORGN &&
+                node.path("meldingsreferanseId").asString() == meldingsreferanseId.toString() &&
+                node.path("vedtaksperiodeId").asString() == vedtaksperiodeId.toString() &&
+                node.path("behandlingId").asString() == behandlingId.toString() &&
+                node.path("status").asString() == "LUKKET" &&
+                hendelseData.path("@event_name").asString() == "behandling_lukket"
         }
     }
 
@@ -140,16 +140,16 @@ class E2ETest {
 
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
-            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asText())
+            val hendelseData = objectMapper.readTree(node.path("hendelsedata").asString())
 
             request.method() == "PATCH" &&
-                node.path("fnr").asText() == FNR &&
-                node.path("yrkesaktivitetidentifikator").asText() == ORGN &&
-                node.path("meldingsreferanseId").asText() == meldingsreferanseId.toString() &&
-                node.path("vedtaksperiodeId").asText() == vedtaksperiodeId.toString() &&
-                node.path("behandlingId").asText() == behandlingId.toString() &&
-                node.path("status").asText() == "FORKASTET" &&
-                hendelseData.path("@event_name").asText() == "behandling_forkastet"
+                node.path("fnr").asString() == FNR &&
+                node.path("yrkesaktivitetidentifikator").asString() == ORGN &&
+                node.path("meldingsreferanseId").asString() == meldingsreferanseId.toString() &&
+                node.path("vedtaksperiodeId").asString() == vedtaksperiodeId.toString() &&
+                node.path("behandlingId").asString() == behandlingId.toString() &&
+                node.path("status").asString() == "FORKASTET" &&
+                hendelseData.path("@event_name").asString() == "behandling_forkastet"
         }
     }
 
@@ -159,7 +159,7 @@ class E2ETest {
         hendelsefabrikk.sendSlettPerson()
         verifiserRequest(httpClientMock) { request ->
             val node = objectMapper.readTree(request.bodyAsString())
-            node.path("fnr").asText() == FNR
+            node.path("fnr").asString() == FNR
         }
     }
 

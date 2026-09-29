@@ -1,7 +1,5 @@
 package no.nav.helse.spekemat.foredler
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotliquery.Session
 import kotliquery.TransactionalSession
 import kotliquery.queryOf
@@ -13,6 +11,8 @@ import no.nav.helse.spekemat.fabrikk.PølseradDto
 import no.nav.helse.spekemat.fabrikk.Pølsestatus
 import org.intellij.lang.annotations.Language
 import org.slf4j.LoggerFactory
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 import java.util.*
 import javax.sql.DataSource
 

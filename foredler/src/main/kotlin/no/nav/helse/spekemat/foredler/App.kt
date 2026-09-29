@@ -1,8 +1,6 @@
 package no.nav.helse.spekemat.foredler
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.navikt.tbd_libs.naisful.naisApp
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -15,12 +13,13 @@ import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import org.flywaydb.core.Flyway
 import org.slf4j.LoggerFactory
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.URI
 import java.time.Duration
 
 private val logg = LoggerFactory.getLogger(::main.javaClass)
 private val sikkerlogg = LoggerFactory.getLogger("tjenestekall")
-private val objectmapper = jacksonObjectMapper().registerModules(JavaTimeModule())
+private val objectmapper = jacksonObjectMapper()
 
 fun main() {
     Thread.currentThread().setUncaughtExceptionHandler { _, e ->

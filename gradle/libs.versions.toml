@@ -5,8 +5,7 @@ tbd-libs = "20260917.2152"
 [libraries]
 flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.7.0"
 hikaricp = "com.zaxxer:HikariCP:6.3.0"
-jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin" }
+jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.1"
 ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth" }
 ktor-server-auth-jwt = { group = "io.ktor", name = "ktor-server-auth-jwt" }

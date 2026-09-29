@@ -2,10 +2,6 @@ package no.nav.helse.spekemat.foredler
 
 import com.auth0.jwt.interfaces.Claim
 import com.auth0.jwt.interfaces.Payload
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.navikt.tbd_libs.naisful.test.TestContext
 import com.github.navikt.tbd_libs.naisful.test.naisfulTestApp
 import com.github.navikt.tbd_libs.test_support.CleanupStrategy
@@ -29,6 +25,9 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.DeserializationFeature
+import tools.jackson.module.kotlin.jacksonMapperBuilder
+import tools.jackson.module.kotlin.readValue
 import java.time.Instant
 import java.util.*
 
@@ -44,9 +43,9 @@ class E2ETest {
     private val dao = PølseDao { dataSource.ds }
     private val mockHttpClient = mockk<java.net.http.HttpClient>(relaxed = true)
     private val objectMapper =
-        jacksonObjectMapper()
-            .registerModule(JavaTimeModule())
+        jacksonMapperBuilder()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build()
 
     @BeforeEach
     fun setup() {

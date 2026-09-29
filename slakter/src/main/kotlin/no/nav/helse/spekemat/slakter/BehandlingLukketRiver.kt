@@ -1,6 +1,5 @@
 package no.nav.helse.spekemat.slakter
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.github.navikt.tbd_libs.rapids_and_rivers.JsonMessage
 import com.github.navikt.tbd_libs.rapids_and_rivers.River
 import com.github.navikt.tbd_libs.rapids_and_rivers_api.MessageContext
@@ -10,6 +9,7 @@ import com.github.navikt.tbd_libs.rapids_and_rivers_api.RapidsConnection
 import io.micrometer.core.instrument.MeterRegistry
 import net.logstash.logback.argument.StructuredArguments.kv
 import org.slf4j.LoggerFactory
+import tools.jackson.databind.JsonNode
 import java.util.*
 
 internal class BehandlingLukketRiver(
@@ -51,7 +51,7 @@ internal class BehandlingLukketRiver(
         val behandlingId = packet["behandlingId"].asUUID()
 
         val meldingsreferanseId = packet["@id"].asUUID()
-        val fnr = packet["fødselsnummer"].asText()
+        val fnr = packet["fødselsnummer"].asString()
         val yrkesaktivitetidentifikator = packet.yrkesaktivitetidentifikator()
 
         logg.info("Håndterer behandling_lukket {} {} {}", kv("meldingsreferanseId", meldingsreferanseId), kv("vedtaksperiodeId", vedtaksperiodeId), kv("behandlingId", behandlingId))
@@ -62,5 +62,5 @@ internal class BehandlingLukketRiver(
         }
     }
 
-    private fun JsonNode.asUUID() = UUID.fromString(asText())
+    private fun JsonNode.asUUID() = UUID.fromString(asString())
 }
