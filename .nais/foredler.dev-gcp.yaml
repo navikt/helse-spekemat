@@ -1,0 +1,23 @@
+spec:
+  azure:
+    application:
+      tenant: trygdeetaten.no
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_17
+        tier: db-f1-micro
+        diskAutoresize: true
+        databases:
+          - name: spekemat
+            envVarPrefix: DATABASE
+        flags:
+          - name: cloudsql.enable_pgaudit
+            value: "off"
+          - name: pgaudit.log
+            value: "write,ddl,role"
+          - name: pgaudit.log_parameter
+            value: "on"
+          - name: pgaudit.log_relation
+            value: "on"
+  ingresses:
+    - https://spekemat.intern.dev.nav.no

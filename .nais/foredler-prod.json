@@ -1,6 +1,0 @@
-{
-  "ingress": "https://spekemat.intern.nav.no",
-  "databaseTier": "db-custom-1-3840",
-  "tenant" : "nav.no",
-  "pgAudit": "on"
-}

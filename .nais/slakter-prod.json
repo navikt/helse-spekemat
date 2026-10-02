@@ -1,5 +1,0 @@
-{
-  "kafkaPool": "nav-prod",
-  "consumerGroupId": "tbd-spekemat-v1",
-  "tenant" : "nav.no"
-}
