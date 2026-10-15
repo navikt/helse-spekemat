@@ -3,7 +3,7 @@ sykepengerGradlePlugins = "20261013.1718"
 tbd-libs = "20261013.1613"
 
 [libraries]
-flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.9.0"
+flyway-database-postgresql = "org.flywaydb:flyway-database-postgresql:13.10.0"
 hikaricp = "com.zaxxer:HikariCP:7.1.0"
 jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin" }
 kotliquery = "com.github.seratch:kotliquery:1.9.1"
@@ -11,7 +11,7 @@ ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth" }
 ktor-server-auth-jwt = { group = "io.ktor", name = "ktor-server-auth-jwt" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic" }
 logstash-logback-encoder = "net.logstash.logback:logstash-logback-encoder:9.0"
-postgresql = "org.postgresql:postgresql:42.7.13"
+postgresql = "org.postgresql:postgresql:42.7.14"
 rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026091610031789545782"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
