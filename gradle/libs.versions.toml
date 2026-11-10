@@ -12,7 +12,7 @@ ktor-server-auth-jwt = { group = "io.ktor", name = "ktor-server-auth-jwt" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic" }
 logstash-logback-encoder = "net.logstash.logback:logstash-logback-encoder:9.0"
 postgresql = "org.postgresql:postgresql:42.7.14"
-rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026091610031789545782"
+rapids-and-rivers = "com.github.navikt:rapids-and-rivers:2026110308421793691732"
 tbd-libs-azure-token-client-default = { module = "com.github.navikt.tbd-libs:azure-token-client-default", version.ref = "tbd-libs" }
 tbd-libs-naisful-app = { module = "com.github.navikt.tbd-libs:naisful-app", version.ref = "tbd-libs" }
 tbd-libs-retry = { module = "com.github.navikt.tbd-libs:retry", version.ref = "tbd-libs" }
